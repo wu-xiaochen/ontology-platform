@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" width="900" height="700">
+  <defs>
+    <linearGradient id="appGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="inferenceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0891B2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0E7490;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="ontologyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#047857;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="storageGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DC2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B91C1C;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="900" height="700" fill="#F8FAFC"/>
+  
+  <!-- Title -->
+  <text x="450" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#1E293B" text-anchor="middle">Ontology Platform - System Architecture</text>
+  <text x="450" y="65" font-family="Arial, sans-serif" font-size="14" fill="#64748B" text-anchor="middle">V1.0 | 2026-03-16</text>
+  
+  <!-- Application Layer -->
+  <g transform="translate(50, 100)">
+    <rect x="0" y="0" width="800" height="90" rx="8" fill="url(#appGradient)" filter="url(#shadow)"/>
+    <text x="400" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">Application Layer</text>
+    
+    <!-- Components -->
+    <rect x="80" y="35" width="120" height="45" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="140" y="62" font-family="Arial, sans-serif" font-size="13" fill="#4F46E5" text-anchor="middle" font-weight="bold">Web UI</text>
+    
+    <rect x="240" y="35" width="120" height="45" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="300" y="62" font-family="Arial, sans-serif" font-size="13" fill="#4F46E5" text-anchor="middle" font-weight="bold">REST API</text>
+    
+    <rect x="400" y="35" width="120" height="45" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="460" y="62" font-family="Arial, sans-serif" font-size="13" fill="#4F46E5" text-anchor="middle" font-weight="bold">WebSocket</text>
+    
+    <rect x="560" y="35" width="120" height="45" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="620" y="62" font-family="Arial, sans-serif" font-size="13" fill="#4F46E5" text-anchor="middle" font-weight="bold">CLI Tools</text>
+    
+    <rect x="680" y="35" width="80" height="45" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="720" y="55" font-family="Arial, sans-serif" font-size="11" fill="#4F46E5" text-anchor="middle" font-weight="bold">React</text>
+    <text x="720" y="68" font-family="Arial, sans-serif" font-size="10" fill="#94A3B8" text-anchor="middle">+ TS</text>
+  </g>
+  
+  <!-- Arrow -->
+  <path d="M450 200 L450 230" stroke="#94A3B8" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <polygon points="445,225 455,225 450,235" fill="#94A3B8"/>
+  
+  <!-- Inference Layer -->
+  <g transform="translate(50, 240)">
+    <rect x="0" y="0" width="800" height="110" rx="8" fill="url(#inferenceGradient)" filter="url(#shadow)"/>
+    <text x="400" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">Inference Engine Layer</text>
+    
+    <!-- Components -->
+    <rect x="60" y="40" width="150" height="55" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="135" y="65" font-family="Arial, sans-serif" font-size="12" fill="#0891B2" text-anchor="middle" font-weight="bold">Reasoning</text>
+    <text x="135" y="80" font-family="Arial, sans-serif" font-size="11" fill="#64748B" text-anchor="middle">Scheduler</text>
+    
+    <rect x="240" y="40" width="150" height="55" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="315" y="65" font-family="Arial, sans-serif" font-size="12" fill="#0891B2" text-anchor="middle" font-weight="bold">Rule</text>
+    <text x="315" y="80" font-family="Arial, sans-serif" font-size="11" fill="#64748B" text-anchor="middle">Matching</text>
+    
+    <rect x="420" y="40" width="150" height="55" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="495" y="65" font-family="Arial, sans-serif" font-size="12" fill="#0891B2" text-anchor="middle" font-weight="bold">Confidence</text>
+    <text x="495" y="80" font-family="Arial, sans-serif" font-size="11" fill="#64748B" text-anchor="middle">Calculation</text>
+    
+    <rect x="600" y="40" width="150" height="55" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="675" y="65" font-family="Arial, sans-serif" font-size="12" fill="#0891B2" text-anchor="middle" font-weight="bold">Result</text>
+    <text x="675" y="80" font-family="Arial, sans-serif" font-size="11" fill="#64748B" text-anchor="middle">Generation</text>
+  </g>
+  
+  <!-- Arrow -->
+  <path d="M450 360 L450 390" stroke="#94A3B8" stroke-width="2" fill="none"/>
+  <polygon points="445,385 455,385 450,395" fill="#94A3B8"/>
+  
+  <!-- Ontology Layer -->
+  <g transform="translate(50, 400)">
+    <rect x="0" y="0" width="800" height="90" rx="8" fill="url(#ontologyGradient)" filter="url(#shadow)"/>
+    <text x="400" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">Ontology Layer</text>
+    
+    <!-- Components -->
+    <rect x="180" y="38" width="140" height="42" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="250" y="63" font-family="Arial, sans-serif" font-size="13" fill="#059669" text-anchor="middle" font-weight="bold">Concepts</text>
+    
+    <rect x="360" y="38" width="140" height="42" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="430" y="63" font-family="Arial, sans-serif" font-size="13" fill="#059669" text-anchor="middle" font-weight="bold">Laws</text>
+    
+    <rect x="540" y="38" width="140" height="42" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="610" y="63" font-family="Arial, sans-serif" font-size="13" fill="#059669" text-anchor="middle" font-weight="bold">Rules</text>
+  </g>
+  
+  <!-- Arrow -->
+  <path d="M450 500 L450 530" stroke="#94A3B8" stroke-width="2" fill="none"/>
+  <polygon points="445,525 455,525 450,535" fill="#94A3B8"/>
+  
+  <!-- Storage Layer -->
+  <g transform="translate(50, 540)">
+    <rect x="0" y="0" width="800" height="90" rx="8" fill="url(#storageGradient)" filter="url(#shadow)"/>
+    <text x="400" y="25" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">Storage Layer</text>
+    
+    <!-- Components -->
+    <rect x="150" y="38" width="140" height="42" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="220" y="63" font-family="Arial, sans-serif" font-size="13" fill="#DC2626" text-anchor="middle" font-weight="bold">YAML Files</text>
+    
+    <rect x="330" y="38" width="140" height="42" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="400" y="63" font-family="Arial, sans-serif" font-size="13" fill="#DC2626" text-anchor="middle" font-weight="bold">SQLite</text>
+    
+    <rect x="510" y="38" width="140" height="42" rx="6" fill="white" fill-opacity="0.95"/>
+    <text x="580" y="63" font-family="Arial, sans-serif" font-size="13" fill="#DC2626" text-anchor="middle" font-weight="bold">Redis</text>
+  </g>
+  
+  <!-- Data Flow -->
+  <g transform="translate(720, 180)">
+    <text x="30" y="0" font-family="Arial, sans-serif" font-size="11" fill="#64748B" text-anchor="middle" transform="rotate(-90, 30, 0)">Data Flow →</text>
+  </g>
+  
+  <!-- Technology Stack Box -->
+  <g transform="translate(50, 645)">
+    <rect x="0" y="0" width="800" height="45" rx="6" fill="#E2E8F0" stroke="#CBD5E1"/>
+    <text x="80" y="18" font-family="Arial, sans-serif" font-size="11" fill="#475569" font-weight="bold">Tech Stack:</text>
+    <text x="80" y="35" font-family="Arial, sans-serif" font-size="10" fill="#64748B">Python 3.10+ | FastAPI | Redis | PostgreSQL | React + TypeScript</text>
+  </g>
+  
+  <!-- API Endpoints -->
+  <g transform="translate(800, 100)">
+    <rect x="0" y="0" width="85" height="130" rx="6" fill="white" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="42" y="18" font-family="Arial, sans-serif" font-size="9" fill="#64748B" text-anchor="middle" font-weight="bold">API Endpoints</text>
+    <line x1="5" y1="25" x2="80" y2="25" stroke="#E2E8F0" stroke-width="1"/>
+    <text x="42" y="40" font-family="Arial, sans-serif" font-size="8" fill="#4F46E5" text-anchor="middle">POST /api/v1/reason</text>
+    <text x="42" y="55" font-family="Arial, sans-serif" font-size="8" fill="#4F46E5" text-anchor="middle">GET /api/v1/ontology</text>
+    <text x="42" y="70" font-family="Arial, sans-serif" font-size="8" fill="#4F46E5" text-anchor="middle">GET /api/v1/domains</text>
+    <text x="42" y="85" font-family="Arial, sans-serif" font-size="8" fill="#4F46E5" text-anchor="middle">GET /api/v1/health</text>
+    <text x="42" y="105" font-family="Arial, sans-serif" font-size="8" fill="#059669" text-anchor="middle" font-weight="bold">JWT Auth</text>
+    <text x="42" y="120" font-family="Arial, sans-serif" font-size="8" fill="#059669" text-anchor="middle" font-weight="bold">RBAC</text>
+  </g>
+  
+  <!-- Legend -->
+  <g transform="translate(50, 640)">
+  </g>
+</svg>
