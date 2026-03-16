@@ -1,21 +1,32 @@
 """
-API主入口 (API Main)
-FastAPI框架搭建，RESTful端点设计和GraphQL支持
+API Main Entry Point (API主入口)
+FastAPI framework, RESTful endpoints and GraphQL support
 
-基于ontology-clawra v3.3的本体论实践，实现生产级API服务：
-- FastAPI框架
-- RESTful端点
-- GraphQL支持 (Strawberry)
-- 推理引擎集成
-- 置信度传播
-- 推理链追溯
+Based on ontology-clawra v3.3 ontology practices, implementing production-level API:
+- FastAPI framework
+- RESTful endpoints
+- GraphQL support (Strawberry)
+- Reasoning engine integration
+- Confidence propagation
+- Inference chain tracing
+- Swagger/OpenAPI documentation
+- Global error handling
+- Enhanced caching strategies
 
-v3.4.0 更新:
-- 添加Prometheus监控和指标收集
-- 添加API密钥认证
-- 添加请求速率限制
-- 添加安全头部
-- 添加性能优化（缓存、连接池）
+v3.4.0 Updates:
+- Added Prometheus monitoring and metrics collection
+- Added API key authentication
+- Added request rate limiting
+- Added security headers
+- Added performance optimization (cache, connection pool)
+
+v3.5.0 Updates:
+- Added Swagger/OpenAPI documentation with detailed descriptions
+- Added global error handling with custom exception handlers
+- Added enhanced cache strategy module
+- Added Redis distributed cache support
+- Added cache warming strategies
+- Added detailed API documentation with examples
 """
 
 import logging
@@ -31,6 +42,7 @@ from enum import Enum
 from fastapi import FastAPI, HTTPException, Depends, Query, Body, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
+from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
 from typing import Union
@@ -58,6 +70,18 @@ from src.performance import (
 from src.export import DataExporter, ExportFormat, ExportOptions, data_exporter
 from src.permissions import permission_manager, Permission, Resource, ResourceType
 from src.caching import query_cache, debug_cache, create_cache
+
+# 导入错误处理和缓存策略
+from src.errors import (
+    setup_exception_handlers, error_handler,
+    ErrorResponse, ErrorCode, ErrorSeverity,
+    OntologyPlatformException, NotFoundException, ValidationException,
+    UnauthorizedException, ForbiddenException, RateLimitException
+)
+from src.cache_strategy import (
+    EnhancedLRUCache, TwoLevelCache, RedisCache, CacheWarmer,
+    CacheConfig, CacheStrategy, create_cache as create_enhanced_cache
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -259,9 +283,64 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Ontology Platform API",
-    description="基于ontology-clawra v3.4的生产级本体平台API",
-    version="3.4.0",
-    lifespan=lifespan
+    description="""## Overview
+
+The Ontology Platform API provides a comprehensive RESTful interface for managing ontological data, 
+performing reasoning operations, and calculating confidence scores.
+
+## Features
+
+- **Ontology Management**: Create, read, update, and delete ontological schemas and triples
+- **Graph Database Integration**: Full integration with Neo4j for graph-based reasoning
+- **Reasoning Engine**: Forward, backward, and bidirectional chaining inference
+- **Confidence Calculation**: Multiple methods including weighted, Bayesian, multiplicative, and Dempster-Shafer
+- **Security**: API key authentication, rate limiting, IP blocking
+- **Performance**: Multi-level caching, connection pooling, query optimization
+- **Monitoring**: Prometheus metrics, health checks, request logging
+- **Export**: Multiple formats (JSON, CSV, Turtle, JSON-LD)
+
+## Authentication
+
+Most endpoints require an API key. Include it in the request header:
+
+```
+X-API-Key: your-api-key-here
+```
+
+## Rate Limiting
+
+Default rate limit: 100 requests per minute per IP.
+
+## Error Responses
+
+All errors follow a consistent format:
+
+```json
+{
+  "error": true,
+  "code": "NOT_FOUND",
+  "message": "Resource not found: example",
+  "timestamp": "2024-01-01T00:00:00",
+  "path": "/api/v1/entities/example",
+  "correlation_id": "abc-123"
+}
+```
+""",
+    version="3.5.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    terms_of_service="https://example.org/terms/",
+    contact={
+        "name": "API Support",
+        "url": "https://example.org/support",
+        "email": "support@example.org"
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+    }
 )
 
 # CORS中间件 - 配置化
@@ -282,6 +361,97 @@ app.add_middleware(RequestLoggingMiddleware)
 # 注册监控端点
 from src.monitoring import setup_app_metrics
 setup_app_metrics(app)
+
+# 注册异常处理器
+setup_exception_handlers(app)
+
+
+# ==================== Custom OpenAPI Schema ====================
+
+def custom_openapi():
+    """Generate custom OpenAPI schema with examples"""
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=[],
+    )
+    
+    # Add custom components
+    openapi_schema["components"]["securitySchemes"] = {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API key authentication. Get your key from /api/v1/auth/api-keys"
+        }
+    }
+    
+    # Add common security scheme
+    openapi_schema["security"] = [{"ApiKeyAuth": []}]
+    
+    # Add examples to schemas
+    if "schemas" in openapi_schema.get("components", {}):
+        # Add examples to key schemas
+        if "EntityCreate" in openapi_schema["components"]["schemas"]:
+            openapi_schema["components"]["schemas"]["EntityCreate"]["example"] = {
+                "name": "http://example.org/person/John",
+                "label": "Person",
+                "properties": {
+                    "age": 30,
+                    "occupation": "Engineer"
+                },
+                "confidence": 0.95
+            }
+        
+        if "RelationshipCreate" in openapi_schema["components"]["schemas"]:
+            openapi_schema["components"]["schemas"]["RelationshipCreate"]["example"] = {
+                "start_entity": "http://example.org/person/John",
+                "end_entity": "http://example.org/person/Jane",
+                "relationship_type": "marriedTo",
+                "properties": {"since": "2020-01-01"},
+                "confidence": 0.9
+            }
+        
+        if "TripleCreate" in openapi_schema["components"]["schemas"]:
+            openapi_schema["components"]["schemas"]["TripleCreate"]["example"] = {
+                "subject": "http://example.org/person/John",
+                "predicate": "http://example.org/knows",
+                "object": "http://example.org/person/Jane",
+                "confidence": 0.85,
+                "source": "manual"
+            }
+        
+        if "InferenceRequest" in openapi_schema["components"]["schemas"]:
+            openapi_schema["components"]["schemas"]["InferenceRequest"]["example"] = {
+                "initial_facts": [
+                    {"subject": "Bird", "predicate": "isA", "object": "Animal", "confidence": 1.0},
+                    {"subject": "Penguin", "predicate": "isA", "object": "Bird", "confidence": 1.0}
+                ],
+                "goal": {"subject": "Penguin", "predicate": "isA", "object": "Animal"},
+                "max_depth": 5,
+                "method": "forward"
+            }
+        
+        if "ConfidenceRequest" in openapi_schema["components"]["schemas"]:
+            openapi_schema["components"]["schemas"]["ConfidenceRequest"]["example"] = {
+                "evidence": [
+                    {"source": "source1", "reliability": 0.9, "content": "Evidence 1"},
+                    {"source": "source2", "reliability": 0.7, "content": "Evidence 2"}
+                ],
+                "method": "weighted"
+            }
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+# Override default OpenAPI generation
+app.openapi = custom_openapi
 
 
 # ==================== Pydantic模型 ====================
@@ -361,13 +531,42 @@ def get_reasoner() -> Reasoner:
 
 @app.get("/")
 async def root():
-    """API根路径"""
+    """API Root
+    
+    Returns basic API information including version, status, and performance metrics.
+    
+    ### Response
+    - **name**: API name
+    - **version**: API version (currently 3.5.0)
+    - **description**: Brief description
+    - **docs**: Link to Swagger documentation
+    - **status**: Service status
+    - **metrics**: Current performance metrics
+    
+    ### Example Response
+    ```json
+    {
+        "name": "Ontology Platform API",
+        "version": "3.5.0",
+        "description": "基于ontology-clawra v3.4的生产级本体平台",
+        "docs": "/docs",
+        "status": "running",
+        "metrics": {
+            "requests_per_second": 150.5,
+            "avg_response_time_ms": 12.3,
+            "cache_stats": {"size": 500, "hit_rate": 0.85}
+        }
+    }
+    ```
+    """
     perf_snapshot = performance_monitor.get_snapshot()
     return {
         "name": "Ontology Platform API",
-        "version": "3.4.0",
-        "description": "基于ontology-clawra v3.4的生产级本体平台",
+        "version": "3.5.0",
+        "description": "基于ontology-clawra v3.5的生产级本体平台",
         "docs": "/docs",
+        "redoc": "/redoc",
+        "openapi": "/openapi.json",
         "status": "running" if state.initialized else "initializing",
         "metrics": {
             "requests_per_second": perf_snapshot.requests_per_second,
@@ -820,33 +1019,216 @@ class CacheStatsResponse(BaseModel):
 
 @app.get("/api/v1/performance/cache")
 async def get_cache_stats():
-    """获取缓存统计"""
-    return CacheStatsResponse(**inference_cache.stats())
+    """获取缓存统计
+    
+    Returns detailed cache statistics including hits, misses, hit rate, and eviction counts.
+    
+    ### Cache Statistics
+    - **size**: Current number of cached items
+    - **max_size**: Maximum cache capacity
+    - **hits**: Number of cache hits
+    - **misses**: Number of cache misses
+    - **hit_rate**: Ratio of hits to total requests
+    - **evictions**: Number of items evicted
+    - **expired**: Number of items expired
+    
+    ### Example Response
+    ```json
+    {
+        "size": 450,
+        "max_size": 1000,
+        "hits": 850,
+        "misses": 150,
+        "hit_rate": 0.85,
+        "evictions": 50,
+        "expired": 200,
+        "default_ttl": 3600,
+        "avg_age_seconds": 120.5,
+        "avg_access_count": 5.2
+    }
+    ```
+    """
+    return inference_cache.stats()
+
+
+@app.get("/api/v1/performance/cache/two-level")
+async def get_two_level_cache_stats():
+    """获取两级缓存统计
+    
+    Returns statistics for the two-level cache system (L1 memory + L2 Redis if configured).
+    
+    ### Response includes:
+    - L1 cache stats (memory)
+    - L2 cache stats (Redis if available)
+    - Hit rates for each level
+    """
+    return query_cache.stats()
+
+
+@app.get("/api/v1/performance/cache/debug")
+async def get_debug_cache_stats():
+    """获取调试缓存统计
+    
+    Returns debug cache statistics with recent access logs.
+    """
+    return debug_cache.stats()
+
+
+@app.get("/api/v1/performance/cache/debug/log")
+async def get_cache_access_log(limit: int = Query(100, ge=1, le=1000)):
+    """获取缓存访问日志
+    
+    Returns recent cache access log for debugging purposes.
+    
+    ### Query Parameters
+    - **limit**: Maximum number of log entries to return (default: 100, max: 1000)
+    """
+    return {"access_log": debug_cache.get_access_log(limit)}
 
 
 @app.post("/api/v1/performance/cache/clear")
 async def clear_cache():
-    """清除缓存"""
+    """清除缓存
+    
+    Clears the main inference cache.
+    """
     inference_cache.clear()
     return {"message": "Cache cleared"}
 
 
-@app.get("/api/v1/performance/profiler")
-async def get_profiler_results():
-    """获取性能分析结果"""
-    results = profiler.get_results()
+@app.post("/api/v1/performance/cache/clear-all")
+async def clear_all_caches():
+    """清除所有缓存
+    
+    Clears all cache layers including inference cache, query cache, and debug cache.
+    """
+    inference_cache.clear()
+    query_cache.clear()
+    debug_cache.clear()
+    return {"message": "All caches cleared"}
+
+
+@app.post("/api/v1/performance/cache/invalidate")
+async def invalidate_cache_by_tag(tag: str = Body(...)):
+    """通过标签使缓存失效
+    
+    Invalidates all cache entries with a specific tag.
+    
+    ### Request Body
+    - **tag**: Tag to invalidate
+    
+    ### Example
+    ```json
+    {"tag": "ontology:schema"}
+    ```
+    """
+    inference_cache.invalidate_by_tag(tag)
+    return {"message": f"Cache invalidated for tag: {tag}"}
+
+
+@app.post("/api/v1/performance/cache/invalidate-pattern")
+async def invalidate_cache_by_pattern(pattern: str = Body(...)):
+    """通过模式使缓存失效
+    
+    Invalidates all cache entries matching a glob pattern.
+    
+    ### Request Body
+    - **pattern**: Glob pattern to match (e.g., "entity:*")
+    
+    ### Example
+    ```json
+    {"pattern": "entity:*"}
+    ```
+    """
+    inference_cache.invalidate_by_pattern(pattern)
+    return {"message": f"Cache invalidated for pattern: {pattern}"}
+
+
+# ==================== Error Statistics API ====================
+
+@app.get("/api/v1/errors/stats")
+async def get_error_stats():
+    """获取错误统计
+    
+    Returns error statistics including error counts by type and recent errors.
+    
+    ### Response
+    - **total_errors**: Total number of errors
+    - **error_counts**: Breakdown by error type
+    - **recent_errors**: Last 10 errors with details
+    
+    ### Example
+    ```json
+    {
+        "total_errors": 50,
+        "error_counts": {
+            "ValidationException": 20,
+            "NotFoundException": 15,
+            "GraphConnectionException": 5
+        },
+        "recent_errors": [...]
+    }
+    ```
+    """
+    return error_handler.get_error_stats()
+
+
+# ==================== Cache Configuration API ====================
+
+class CacheConfigRequest(BaseModel):
+    """缓存配置请求"""
+    strategy: str = Field(default="lru", description="Cache strategy: lru, lfu, fifo, ttl")
+    max_size: int = Field(default=1000, ge=1, le=100000, description="Maximum cache size")
+    default_ttl: float = Field(default=3600, ge=1, le=86400, description="Default TTL in seconds")
+    enable_redis: bool = Field(default=False, description="Enable Redis L2 cache")
+    redis_host: str = Field(default="localhost", description="Redis host")
+    redis_port: int = Field(default=6379, description="Redis port")
+    redis_db: int = Field(default=0, description="Redis database number")
+
+
+@app.post("/api/v1/performance/cache/config")
+async def update_cache_config(request: CacheConfigRequest):
+    """更新缓存配置
+    
+    Updates the cache configuration (affects new cache instances).
+    
+    ### Request Body
+    - **strategy**: Cache eviction strategy (lru, lfu, fifo, ttl)
+    - **max_size**: Maximum number of items
+    - **default_ttl**: Default time-to-live in seconds
+    - **enable_redis**: Whether to use Redis for L2 cache
+    - **redis_host**: Redis server host
+    - **redis_port**: Redis server port
+    - **redis_db**: Redis database number
+    """
+    config = CacheConfig.from_dict({
+        "strategy": request.strategy,
+        "max_size": request.max_size,
+        "default_ttl": request.default_ttl,
+        "enable_redis": request.enable_redis,
+        "redis_config": {
+            "host": request.redis_host,
+            "port": request.redis_port,
+            "db": request.redis_db
+        } if request.enable_redis else None
+    })
+    
     return {
-        "profiles": [
-            {
-                "function_name": r.function_name,
-                "call_count": r.call_count,
-                "total_time": round(r.total_time, 4),
-                "avg_time": round(r.avg_time, 4),
-                "min_time": round(r.min_time, 4),
-                "max_time": round(r.max_time, 4)
-            }
-            for r in results
-        ]
+        "message": "Cache configuration updated",
+        "config": config.to_dict()
+    }
+
+
+@app.get("/api/v1/performance/cache/config")
+async def get_cache_config():
+    """获取当前缓存配置
+    
+    Returns the current cache configuration.
+    """
+    return {
+        "inference_cache": inference_cache.stats(),
+        "query_cache": query_cache.stats(),
+        "debug_cache": debug_cache.stats()
     }
 
 
