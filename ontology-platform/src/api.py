@@ -9,7 +9,7 @@ import sys
 from typing import Any, Dict, List, Optional
 
 # 添加 src 目录到 Python 路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
