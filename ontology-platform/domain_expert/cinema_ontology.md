@@ -57,28 +57,30 @@
 
 #### 1.1.3 机构组织
 
-| 概念 | 英文 | 定义 | 关键属性 |
-|------|------|------|----------|
-| 影视制作公司 | Production Company | 影视内容制作主体 | 公司编号、公司名称、成立时间、代表作品、注册资本 |
-| 影视发行公司 | Distribution Company | 影视发行放映主体 | 公司编号、公司名称、发行渠道、发行案例 |
-| 电影院线 | Cinema Chain | 影院连锁经营主体 | 院线编号、院线名称、影院数量、银幕数量、会员规模 |
-| 电影院 | Cinema | 影院经营实体 | 影院编号、影院名称、地址、座位数、放映设备 |
-| 流媒体平台 | Streaming Platform | 网络视听平台 | 平台编号、平台名称、用户规模、内容库规模、商业模式 |
-| 电视台 | Television Station | 传统电视播出机构 | 电视台编号、电台名称、频道定位、覆盖范围 |
-| 影视基地 | Film Studio | 影视拍摄基地 | 基地编号、基地名称、地址、摄影棚数量、配套设施 |
-| 后期制作公司 | Post-Production Company | 影视后期制作服务商 | 公司编号、公司名称、服务范围、技术设备 |
-| 经纪公司 | Talent Agency | 艺人经纪公司 | 公司编号、公司名称、旗下艺人、业务范围 |
-| 影视器材租赁公司 | Equipment Rental | 影视设备租赁服务商 | 公司编号、公司名称、设备类型、价格体系 |
-| 影视基金公司 | Film Fund | 影视投资基金管理公司 | 基金编号、基金名称、投资方向、基金规模 |
+| 实体ID | 概念 | 英文 | 定义 | 关键属性 |
+|--------|------|------|------|----------|
+| cinema_production_company | 影视制作公司 | Production Company | 影视内容制作主体 | 公司编号、公司名称、成立时间、代表作品、注册资本 |
+| cinema_distribution_company | 影视发行公司 | Distribution Company | 影视发行放映主体 | 公司编号、公司名称、发行渠道、发行案例 |
+| cinema_cinema_chain | 电影院线 | Cinema Chain | 影院连锁经营主体 | 院线编号、院线名称、影院数量、银幕数量、会员规模 |
+| cinema_cinema | 电影院 | Cinema | 影院经营实体 | 影院编号、影院名称、地址、座位数、放映设备 |
+| cinema_streaming | 流媒体平台 | Streaming Platform | 网络视听平台 | 平台编号、平台名称、用户规模、内容库规模、商业模式 |
+| cinema_tv_station | 电视台 | Television Station | 传统电视播出机构 | 电视台编号、电台名称、频道定位、覆盖范围 |
+| cinema_film_studio | 影视基地 | Film Studio | 影视拍摄基地 | 基地编号、基地名称、地址、摄影棚数量、配套设施 |
+| cinema_post_production | 后期制作公司 | Post-Production Company | 影视后期制作服务商 | 公司编号、公司名称、服务范围、技术设备 |
+| cinema_talent_agency | 经纪公司 | Talent Agency | 艺人经纪公司 | 公司编号、公司名称、旗下艺人、业务范围 |
+| cinema_equipment_rental | 影视器材租赁公司 | Equipment Rental | 影视设备租赁服务商 | 公司编号、公司名称、设备类型、价格体系 |
+| cinema_film_fund | 影视基金公司 | Film Fund | 影视投资基金管理公司 | 基金编号、基金名称、投资方向、基金规模 |
+| cinema_cgi_studio | CGI工作室 | CGI Studio | 电脑生成图像制作 | 工作室编号、名称、代表作品、技术特长 |
+| cinema_music_label | 音乐厂牌 | Music Label | 影视音乐制作发行 | 厂牌编号、名称、代表作品、音乐类型 |
 
 #### 1.1.4 奖项与评选
 
-| 概念 | 英文 | 定义 | 关键属性 |
-|------|------|------|----------|
-| 影视奖项 | Film Award | 影视行业评选奖项 | 奖项编号、奖项名称、主办方、评选周期、奖项类别 |
-| 电影节 | Film Festival | 影视展映评选活动 | 电影节编号、名称、举办地点、创办时间、单元设置 |
-| 影视展会 | Film Market | 影视内容交易展会 | 展会编号、名称、举办地点、参展商数量、交易规模 |
-| 榜单 | Ranking | 影视作品或人物排行 | 榜单编号、名称、发布方、评选标准、榜单类型 |
+| 实体ID | 概念 | 英文 | 定义 | 关键属性 |
+|--------|------|------|------|----------|
+| cinema_award | 影视奖项 | Film Award | 影视行业评选奖项 | 奖项编号、奖项名称、主办方、评选周期、奖项类别 |
+| cinema_film_festival | 电影节 | Film Festival | 影视展映评选活动 | 电影节编号、名称、举办地点、创办时间、单元设置 |
+| cinema_film_market | 影视展会 | Film Market | 影视内容交易展会 | 展会编号、名称、举办地点、参展商数量、交易规模 |
+| cinema_ranking | 榜单 | Ranking | 影视作品或人物排行 | 榜单编号、名称、发布方、评选标准、榜单类型 |
 
 #### 1.1.5 运营与数据
 
