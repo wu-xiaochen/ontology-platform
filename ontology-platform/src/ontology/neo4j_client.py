@@ -237,9 +237,13 @@ class Neo4jClient:
         Returns:
             创建的节点
         """
+        # 确保 properties 包含 name 字段
+        props = dict(properties) if properties else {}
+        props.setdefault("name", name)
+        
         node = GraphNode(
             labels=[label],
-            properties=properties or {"name": name},
+            properties=props,
             confidence=confidence,
             source=source,
             created_at=datetime.now().isoformat()
@@ -496,6 +500,40 @@ class Neo4jClient:
                     for r in rels:
                         rel = self._record_to_relationship(r)
                         result.relationships.append(rel)
+        else:
+            # 内存模式实现
+            visited: Set[str] = {entity_name}
+            queue: List[tuple[str, int]] = [(entity_name, 0)]
+            
+            while queue:
+                current, current_depth = queue.pop(0)
+                
+                if current_depth >= depth:
+                    continue
+                
+                # 获取当前实体的关系
+                for rel in self._relationship_index.values():
+                    if rel.start_node == current:
+                        # 检查关系类型过滤
+                        if rel_types and rel.type not in rel_types:
+                            continue
+                        
+                        # 添加关系
+                        if rel not in result.relationships:
+                            result.relationships.append(rel)
+                        
+                        # 添加目标节点
+                        if rel.end_node not in visited:
+                            node = self._node_index.get(rel.end_node)
+                            if node:
+                                result.nodes.append(node)
+                            visited.add(rel.end_node)
+                            queue.append((rel.end_node, current_depth + 1))
+            
+            # 也添加起始节点
+            start_node = self._node_index.get(entity_name)
+            if start_node and start_node not in result.nodes:
+                result.nodes.insert(0, start_node)
         
         return result
     
@@ -612,26 +650,53 @@ class Neo4jClient:
         """
         confidence_map: Dict[str, float] = {start_name: 1.0}
         
-        if not self._connected:
-            return confidence_map
+        # 构建邻接表（支持内存模式和Neo4j模式）
+        adjacency: Dict[str, List[tuple[str, float]]] = defaultdict(list)
         
-        with self.session() as session:
-            query = f"""
-            MATCH path = (start)-[r*1..{max_depth}]->(end)
-            WHERE start.name = $name
-            WITH end, collect(path) as paths
-            RETURN end.name as entity,
-                   REDUCE(c = 1.0, p IN paths | 
-                       MAX(c * REDUCE(conf = 1.0, r IN relationships(p) | conf * r.confidence))
-                   ) as confidence
-            """
+        if self._connected:
+            # Neo4j 模式
+            with self.session() as session:
+                query = f"""
+                MATCH path = (start)-[r*1..{max_depth}]->(end)
+                WHERE start.name = $name
+                WITH end, collect(path) as paths
+                RETURN end.name as entity,
+                       REDUCE(c = 1.0, p IN paths | 
+                           MAX(c * REDUCE(conf = 1.0, r IN relationships(p) | conf * r.confidence))
+                       ) as confidence
+                """
+                
+                result = session.run(query, name=start_name)
+                
+                for record in result:
+                    entity = record["entity"]
+                    conf = record["confidence"]
+                    confidence_map[entity] = conf
+        else:
+            # 内存模式：从关系索引构建
+            for key, rel in self._relationship_index.items():
+                if rel.start_node == start_name:
+                    adjacency[start_name].append((rel.end_node, rel.confidence))
+                # 添加所有关系到邻接表
+                adjacency[rel.start_node].append((rel.end_node, rel.confidence))
             
-            result = session.run(query, name=start_name)
+            # BFS 传播
+            visited: Set[str] = {start_name}
+            queue: List[tuple[str, float, int]] = [(start_name, 1.0, 0)]
             
-            for record in result:
-                entity = record["entity"]
-                conf = record["confidence"]
-                confidence_map[entity] = conf
+            while queue:
+                current, current_conf, depth = queue.pop(0)
+                
+                if depth >= max_depth:
+                    continue
+                
+                for neighbor, edge_conf in adjacency.get(current, []):
+                    new_conf = current_conf * edge_conf
+                    
+                    if neighbor not in visited or new_conf > confidence_map.get(neighbor, 0):
+                        confidence_map[neighbor] = new_conf
+                        visited.add(neighbor)
+                        queue.append((neighbor, new_conf, depth + 1))
         
         return confidence_map
     

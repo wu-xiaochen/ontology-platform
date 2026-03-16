@@ -615,6 +615,208 @@ class RDFAdapter:
             "prefixes": self.prefixes
         }
 
+    # ==================== 置信度传播 (v3.3新增) ====================
+
+    def propagate_confidence(
+        self,
+        start_entity: str,
+        max_depth: int = 3,
+        method: str = "multiplicative"
+    ) -> Dict[str, float]:
+        """
+        置信度传播算法
+
+        从起始实体出发，计算可达实体的置信度。
+        内存模式实现，不依赖Neo4j。
+
+        Args:
+            start_entity: 起始实体名称
+            max_depth: 最大传播深度
+            method: 传播方法 (min, arithmetic, geometric, multiplicative)
+
+        Returns:
+            实体名到置信度的映射
+        """
+        # 构建邻接表 - 支持完整URI和短名称
+        adjacency: Dict[str, List[tuple[str, float]]] = defaultdict(list)
+        
+        for triple in self.triples:
+            if triple.subject.term_type == RDFTermType.URI:
+                subj = triple.subject.value
+                obj = triple.object.value
+                # 存储 (目标, 置信度)
+                adjacency[subj].append((obj, triple.confidence))
+                # 同时添加短名称映射（去掉base_uri前缀）
+                subj_short = subj.replace(self.base_uri, "")
+                obj_short = obj.replace(self.base_uri, "")
+                adjacency[subj_short].append((obj_short, triple.confidence))
+                adjacency[subj].append((obj_short, triple.confidence))
+                adjacency[subj_short].append((obj, triple.confidence))
+
+        # BFS 传播
+        confidence_map: Dict[str, float] = {start_entity: 1.0}
+        visited: Set[str] = {start_entity}
+        queue: List[tuple[str, float, int]] = [(start_entity, 1.0, 0)]  # (entity, confidence, depth)
+
+        while queue:
+            current, current_conf, depth = queue.pop(0)
+            
+            if depth >= max_depth:
+                continue
+
+            for neighbor, edge_conf in adjacency.get(current, []):
+                # 计算传播后的置信度
+                if method == "min":
+                    new_conf = min(current_conf, edge_conf)
+                elif method == "arithmetic":
+                    new_conf = (current_conf + edge_conf) / 2
+                elif method == "geometric":
+                    new_conf = (current_conf * edge_conf) ** 0.5
+                elif method == "multiplicative":
+                    new_conf = current_conf * edge_conf
+                else:
+                    new_conf = current_conf * edge_conf
+
+                # 更新置信度（取最大值）
+                if neighbor not in visited or new_conf > confidence_map.get(neighbor, 0):
+                    confidence_map[neighbor] = new_conf
+                    visited.add(neighbor)
+                    queue.append((neighbor, new_conf, depth + 1))
+
+        return confidence_map
+
+    def trace_inference(
+        self,
+        start_entity: str,
+        end_entity: str,
+        max_depth: int = 5
+    ) -> List[Dict]:
+        """
+        推理链追溯
+
+        查找从起始实体到目标实体的推理路径。
+
+        Args:
+            start_entity: 起始实体
+            end_entity: 目标实体
+            max_depth: 最大深度
+
+        Returns:
+            推理路径列表，每条路径包含节点、关系和置信度
+        """
+        # 构建图 - 支持完整URI和短名称
+        graph: Dict[str, List[tuple[str, float, RDFTriple]]] = defaultdict(list)
+        
+        for triple in self.triples:
+            if triple.subject.term_type == RDFTermType.URI:
+                subj = triple.subject.value
+                obj = triple.object.value
+                graph[subj].append((obj, triple.confidence, triple))
+                # 添加短名称映射
+                subj_short = subj.replace(self.base_uri, "")
+                obj_short = obj.replace(self.base_uri, "")
+                graph[subj_short].append((obj_short, triple.confidence, triple))
+                graph[subj].append((obj_short, triple.confidence, triple))
+                graph[subj_short].append((obj, triple.confidence, triple))
+
+        # BFS 查找所有路径
+        paths: List[Dict] = []
+        queue: List[tuple[str, List[str], float, List[RDFTriple]]] = [
+            (start_entity, [start_entity], 1.0, [])
+        ]
+
+        while queue:
+            current, path, path_conf, path_triples = queue.pop(0)
+
+            if len(path) - 1 > max_depth:
+                continue
+
+            # 找到目标
+            if current == end_entity:
+                paths.append({
+                    "nodes": path,
+                    "relationships": [t.to_dict() for t in path_triples],
+                    "confidence": path_conf,
+                    "depth": len(path) - 1
+                })
+                continue
+
+            # 继续扩展
+            for neighbor, edge_conf, triple in graph.get(current, []):
+                if neighbor not in path:  # 避免循环
+                    new_path = path + [neighbor]
+                    new_conf = path_conf * edge_conf
+                    new_triples = path_triples + [triple]
+                    queue.append((neighbor, new_path, new_conf, new_triples))
+
+        # 按置信度排序
+        paths.sort(key=lambda p: p["confidence"], reverse=True)
+
+        return paths[:10]  # 返回最多10条路径
+
+    def compute_inference_confidence(
+        self,
+        reasoning_chain: List[RDFTriple]
+    ) -> float:
+        """
+        计算推理链的整体置信度
+
+        Args:
+            reasoning_chain: 推理链中的三元组列表
+
+        Returns:
+            整体置信度
+        """
+        if not reasoning_chain:
+            return 0.0
+
+        # 使用乘法传播
+        product = 1.0
+        for triple in reasoning_chain:
+            product *= triple.confidence
+
+        return product
+
+    def get_reasoning_explanation(
+        self,
+        start_entity: str,
+        end_entity: str
+    ) -> str:
+        """
+        获取推理过程的可读解释
+
+        Args:
+            start_entity: 起始实体
+            end_entity: 目标实体
+
+        Returns:
+            可读的推理解释
+        """
+        paths = self.trace_inference(start_entity, end_entity)
+
+        if not paths:
+            return f"未找到从 {start_entity} 到 {end_entity} 的推理路径"
+
+        lines = []
+        lines.append(f"从 {start_entity} 到 {end_entity} 的推理路径:")
+        lines.append("")
+
+        for i, path in enumerate(paths[:3], 1):
+            lines.append(f"路径 {i} (置信度: {path['confidence']:.3f}, 深度: {path['depth']}):")
+            
+            for j, node in enumerate(path["nodes"]):
+                lines.append(f"  {j+1}. {node}")
+                
+                if j < len(path["relationships"]):
+                    rel = path["relationships"][j]
+                    pred = rel.get("predicate", {}).get("value", "unknown")
+                    conf = rel.get("confidence", 1.0)
+                    lines.append(f"     --[{pred}]--> (置信度: {conf})")
+
+            lines.append("")
+
+        return "\n".join(lines)
+
 
 # ==================== 便捷函数 ====================
 
