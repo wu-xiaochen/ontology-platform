@@ -6,6 +6,46 @@
 
 ## [未发布] (Unreleased)
 
+### Added
+- **数据导出模块** (`src/export.py`):
+  - 多格式导出支持 (JSON, CSV, Turtle, JSON-LD)
+  - 三元组导出
+  - 实体导出
+  - Schema导出
+  - 元数据包含选项
+
+- **权限管理模块** (`src/permissions.py`):
+  - 细粒度RBAC权限控制
+  - 角色管理 (创建、更新、删除)
+  - 用户-角色映射
+  - 权限继承
+  - 资源级别访问控制
+
+- **增强缓存模块** (`src/caching.py`):
+  - LRU缓存 (带TTL和标签)
+  - 两级缓存 (L1 + L2)
+  - 监控缓存 (带访问日志)
+  - 缓存失效策略
+  - 缓存工厂函数
+
+- **API 新增端点**:
+  - `POST /api/v1/export/triples` - 导出三元组
+  - `POST /api/v1/export/entities` - 导出实体
+  - `POST /api/v1/export/schema` - 导出Schema
+  - `GET /api/v1/permissions/roles` - 列出角色
+  - `POST /api/v1/permissions/roles` - 创建角色
+  - `PUT /api/v1/permissions/roles/{name}` - 更新角色
+  - `DELETE /api/v1/permissions/roles/{name}` - 删除角色
+  - `GET /api/v1/permissions/users/{id}/roles` - 获取用户角色
+  - `POST /api/v1/permissions/users/roles` - 分配角色
+  - `GET /api/v1/permissions/users/{id}/permissions` - 获取用户权限
+  - `GET /api/v1/permissions/check` - 检查权限
+  - `GET /api/v1/performance/cache/two-level` - 两级缓存统计
+  - `GET /api/v1/performance/cache/debug` - 调试缓存统计
+  - `GET /api/v1/performance/cache/debug/log` - 缓存访问日志
+  - `POST /api/v1/performance/cache/clear-all` - 清除所有缓存
+  - `POST /api/v1/performance/cache/invalidate` - 标签失效
+
 ## [3.4.0] - 2026-03-17
 
 ### Added

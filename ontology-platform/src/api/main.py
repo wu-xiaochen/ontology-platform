@@ -55,6 +55,9 @@ from src.performance import (
     inference_cache, cached, profiler, 
     optimization_config, resource_manager
 )
+from src.export import DataExporter, ExportFormat, ExportOptions, data_exporter
+from src.permissions import permission_manager, Permission, Resource, ResourceType
+from src.caching import query_cache, debug_cache, create_cache
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -845,6 +848,300 @@ async def get_profiler_results():
             for r in results
         ]
     }
+
+
+# ==================== 数据导出 API ====================
+
+class ExportRequest(BaseModel):
+    """导出请求"""
+    format: str = Field(default="json", description="导出格式: json, csv, turtle, jsonld")
+    subject: Optional[str] = None
+    predicate: Optional[str] = None
+    object: Optional[str] = None
+    label: Optional[str] = None
+    include_metadata: bool = True
+    include_schema: bool = True
+    max_records: int = Field(default=10000, ge=1, le=100000)
+
+
+@app.post("/api/v1/export/triples")
+async def export_triples(
+    request: ExportRequest,
+    adapter: RDFAdapter = Depends(get_rdf_adapter)
+):
+    """导出三元组数据"""
+    # Update exporter with current adapter
+    exporter = DataExporter(rdf_adapter=adapter)
+    
+    try:
+        fmt = ExportFormat(request.format)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {request.format}")
+    
+    options = ExportOptions(
+        format=fmt,
+        include_metadata=request.include_metadata,
+        include_schema=request.include_schema,
+        max_records=request.max_records
+    )
+    
+    result = exporter.export_triples(
+        subject=request.subject,
+        predicate=request.predicate,
+        obj=request.object,
+        options=options
+    )
+    
+    # Determine content type
+    content_types = {
+        "json": "application/json",
+        "csv": "text/csv",
+        "turtle": "text/turtle",
+        "jsonld": "application/ld+json"
+    }
+    
+    return Response(
+        content=result,
+        media_type=content_types.get(request.format, "application/json"),
+        headers={"Content-Disposition": f"attachment; filename=triples.{request.format}"}
+    )
+
+
+@app.post("/api/v1/export/entities")
+async def export_entities(
+    request: ExportRequest,
+    client: Neo4jClient = Depends(get_neo4j_client)
+):
+    """导出实体数据"""
+    exporter = DataExporter(neo4j_client=client)
+    
+    try:
+        fmt = ExportFormat(request.format)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {request.format}")
+    
+    options = ExportOptions(
+        format=fmt,
+        include_metadata=request.include_metadata,
+        max_records=request.max_records
+    )
+    
+    result = exporter.export_entities(
+        label=request.label,
+        options=options
+    )
+    
+    content_types = {
+        "json": "application/json",
+        "csv": "text/csv"
+    }
+    
+    return Response(
+        content=result,
+        media_type=content_types.get(request.format, "application/json"),
+        headers={"Content-Disposition": f"attachment; filename=entities.{request.format}"}
+    )
+
+
+@app.post("/api/v1/export/schema")
+async def export_schema(
+    request: ExportRequest,
+    adapter: RDFAdapter = Depends(get_rdf_adapter)
+):
+    """导出本体Schema"""
+    exporter = DataExporter(rdf_adapter=adapter)
+    
+    try:
+        fmt = ExportFormat(request.format)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Unsupported format: {request.format}")
+    
+    options = ExportOptions(
+        format=fmt,
+        include_metadata=request.include_metadata
+    )
+    
+    result = exporter.export_schema(options=options)
+    
+    content_types = {
+        "json": "application/json",
+        "jsonld": "application/ld+json"
+    }
+    
+    return Response(
+        content=result,
+        media_type=content_types.get(request.format, "application/json"),
+        headers={"Content-Disposition": f"attachment; filename=schema.{request.format}"}
+    )
+
+
+# ==================== 权限管理 API ====================
+
+class RoleCreateRequest(BaseModel):
+    """创建角色请求"""
+    name: str
+    description: str
+    permissions: List[str] = []
+    inherits_from: List[str] = []
+
+
+class UserRoleRequest(BaseModel):
+    """用户角色分配请求"""
+    user_id: str
+    role_name: str
+
+
+@app.get("/api/v1/permissions/roles")
+async def list_roles():
+    """列出所有角色"""
+    return {"roles": permission_manager.list_roles()}
+
+
+@app.post("/api/v1/permissions/roles")
+async def create_role(request: RoleCreateRequest):
+    """创建新角色"""
+    try:
+        perms = {Permission(p) for p in request.permissions}
+        role = permission_manager.create_role(
+            name=request.name,
+            description=request.description,
+            permissions=perms,
+            inherits_from=request.inherits_from
+        )
+        return {"message": "Role created", "role": role.name}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.put("/api/v1/permissions/roles/{role_name}")
+async def update_role(role_name: str, request: RoleCreateRequest):
+    """更新角色"""
+    try:
+        perms = {Permission(p) for p in request.permissions}
+        role = permission_manager.update_role(
+            name=role_name,
+            description=request.description,
+            permissions=perms,
+            inherits_from=request.inherits_from
+        )
+        return {"message": "Role updated", "role": role.name}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/api/v1/permissions/roles/{role_name}")
+async def delete_role(role_name: str):
+    """删除角色"""
+    try:
+        success = permission_manager.delete_role(role_name)
+        if success:
+            return {"message": "Role deleted"}
+        raise HTTPException(status_code=404, detail="Role not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/v1/permissions/users/{user_id}/roles")
+async def get_user_roles(user_id: str):
+    """获取用户角色"""
+    return {"user_id": user_id, "roles": permission_manager.get_user_roles(user_id)}
+
+
+@app.post("/api/v1/permissions/users/roles")
+async def assign_role(request: UserRoleRequest):
+    """分配角色给用户"""
+    try:
+        permission_manager.assign_role(request.user_id, request.role_name)
+        return {"message": "Role assigned"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/api/v1/permissions/users/{user_id}/roles/{role_name}")
+async def remove_user_role(user_id: str, role_name: str):
+    """移除用户角色"""
+    success = permission_manager.remove_role(user_id, role_name)
+    if success:
+        return {"message": "Role removed"}
+    return {"message": "Role not assigned to user"}
+
+
+@app.get("/api/v1/permissions/users/{user_id}/permissions")
+async def get_user_permissions(user_id: str):
+    """获取用户权限"""
+    perms = permission_manager.get_user_permissions(user_id)
+    return {"user_id": user_id, "permissions": [p.value for p in perms]}
+
+
+@app.get("/api/v1/permissions/check")
+async def check_permission(
+    user_id: str,
+    permission: str
+):
+    """检查用户权限"""
+    try:
+        perm = Permission(permission)
+        has_permission = permission_manager.check_permission(user_id, perm)
+        return {"user_id": user_id, "permission": permission, "allowed": has_permission}
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid permission: {permission}")
+
+
+# ==================== 增强缓存 API ====================
+
+class CacheCreateRequest(BaseModel):
+    """创建缓存请求"""
+    cache_type: str = "lru"
+    max_size: int = 1000
+    default_ttl: float = 3600
+
+
+@app.get("/api/v1/performance/cache/two-level")
+async def get_two_level_cache_stats():
+    """获取两级缓存统计"""
+    return query_cache.stats()
+
+
+@app.get("/api/v1/performance/cache/debug")
+async def get_debug_cache_stats():
+    """获取调试缓存统计"""
+    return debug_cache.stats()
+
+
+@app.get("/api/v1/performance/cache/debug/log")
+async def get_cache_access_log(limit: int = Query(100, ge=1, le=1000)):
+    """获取缓存访问日志"""
+    return {"access_log": debug_cache.get_access_log(limit)}
+
+
+@app.post("/api/v1/performance/cache/clear-all")
+async def clear_all_caches():
+    """清除所有缓存"""
+    inference_cache.clear()
+    query_cache.clear()
+    debug_cache.clear()
+    return {"message": "All caches cleared"}
+
+
+@app.post("/api/v1/performance/cache/invalidate")
+async def invalidate_cache_by_tag(tag: str = Body(...)):
+    """通过标签使缓存失效"""
+    inference_cache.invalidate_by_tag(tag)
+    return {"message": f"Cache invalidated for tag: {tag}"}
+
+
+@app.post("/api/v1/performance/cache/create")
+async def create_custom_cache(request: CacheCreateRequest):
+    """创建自定义缓存"""
+    try:
+        cache = create_cache(
+            cache_type=request.cache_type,
+            max_size=request.max_size,
+            default_ttl=request.default_ttl
+        )
+        return {"message": "Cache created", "config": request.dict()}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # ==================== 运行入口 ====================
