@@ -7,6 +7,43 @@
 ## [未发布] (Unreleased)
 
 ### Added
+- **GraphQL支持** (`src/api/graphql.py`):
+  - Strawberry GraphQL集成
+  - 完整Query和Mutation类型
+  - 实体、关系、本体Schema查询
+  - GraphQL端点: /api/graphql/graphql
+
+- **主动学习引擎** (`src/ontology/auto_learn.py`):
+  - 用户确认后自动抽取到本体
+  - 高频实体自动识别(阈值可配置)
+  - 推理失败主动建议补充
+  - 置信度升级机制 (ASSUMED -> CONFIRMED)
+  - 抽取日志记录
+
+- **SPARQL端点** (`src/ontology/rdf_adapter.py`):
+  - 简化版SPARQL SELECT查询
+  - RDF/XML序列化
+  - JSON-LD序列化
+  - Turtle格式导出
+
+- **API 新增端点**:
+  - `POST /api/v1/sparql` - SPARQL查询
+  - `GET /api/v1/export/turtle` - Turtle导出
+  - `GET /api/v1/export/jsonld` - JSON-LD导出
+  - `GET /api/v1/export/rdfxml` - RDF/XML导出
+  - `POST /api/v1/auto-learn/extract` - 实体抽取
+  - `POST /api/v1/auto-learn/save` - 保存到本体
+  - `POST /api/v1/auto-learn/upgrade-confidence` - 置信度升级
+  - `POST /api/v1/auto-learn/suggest` - 补充建议
+  - `GET /api/v1/auto-learn/stats` - 学习统计
+  - `GET /api/v1/auto-learn/log` - 抽取日志
+  - `GET /api/v1/auto-learn/high-frequency` - 高频实体
+
+- **依赖更新**:
+  - 添加 strawberry-graphql>=0.200.0
+  - 添加 neo4j>=5.0.0
+  - 添加 pyyaml>=6.0.0
+
 - **数据导出模块** (`src/export.py`):
   - 多格式导出支持 (JSON, CSV, Turtle, JSON-LD)
   - 三元组导出
