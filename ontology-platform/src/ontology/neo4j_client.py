@@ -629,6 +629,56 @@ class Neo4jClient:
                     
                     paths.append(path)
         
+        # 内存模式 - BFS查找路径
+        if not self._connected:
+            # 构建邻接表
+            adjacency: Dict[str, List[tuple[str, float, GraphRelationship]]] = defaultdict(list)
+            for rel in self._relationship_index.values():
+                adjacency[rel.start_node].append((rel.end_node, rel.confidence, rel))
+                # 双向添加（无向图视为）
+                adjacency[rel.end_node].append((rel.start_node, rel.confidence, rel))
+            
+            # BFS 查找所有路径
+            queue: List[tuple[str, List[str], float, List[GraphRelationship]]] = [
+                (start_name, [start_name], 1.0, [])
+            ]
+            
+            while queue:
+                current, path, path_conf, path_rels = queue.pop(0)
+                
+                if len(path) - 1 > max_depth:
+                    continue
+                
+                # 找到目标
+                if current == end_name:
+                    # 构建节点列表
+                    nodes = []
+                    for node_name in path:
+                        node = self._node_index.get(node_name)
+                        if node:
+                            nodes.append(node)
+                    
+                    inference_path = InferencePath(
+                        nodes=nodes,
+                        relationships=path_rels,
+                        confidence=path_conf,
+                        depth=len(path) - 1
+                    )
+                    paths.append(inference_path)
+                    continue
+                
+                # 继续扩展
+                for neighbor, edge_conf, rel in adjacency.get(current, []):
+                    if neighbor not in path:  # 避免循环
+                        new_path = path + [neighbor]
+                        new_conf = path_conf * edge_conf
+                        new_rels = path_rels + [rel]
+                        queue.append((neighbor, new_path, new_conf, new_rels))
+            
+            # 按置信度排序
+            paths.sort(key=lambda p: p.confidence, reverse=True)
+            paths = paths[:10]  # 最多返回10条
+        
         # 缓存结果
         self._inference_cache[cache_key] = paths
         

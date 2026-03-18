@@ -8,7 +8,7 @@ import asyncio
 import hashlib
 import json
 import logging
-from typing import Dict, Any, Optional, Callable, TypeVar, Generic
+from typing import Dict, Any, Optional, Callable, TypeVar, Generic, List
 from dataclasses import dataclass
 from functools import wraps
 from collections import OrderedDict
