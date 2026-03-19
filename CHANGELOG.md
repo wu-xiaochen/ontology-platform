@@ -2,6 +2,17 @@
 
 All notable changes to ontology-platform will be documented in this file.
 
+## [1.1.0] - 2026-03-19
+
+### Added
+- **聚量采购（Volume Pooling）领域本体**：新增采购供应链本体第七章
+  - 三级聚量分类：全国聚量 / 区域聚量 / 预测性聚量
+  - 物料离散率公式：标准化分 = 物料种类数 ÷ 交易总次数
+  - 聚量规则表：金额、买家数、频次、标准化分阈值
+  - 真实案例数据：IC卡、锂电池、干电池、阻火器、智能水表
+  - 聚量节省估算公式、决策流程、关联本体图
+- **ontology-clawra v3.6.1**：追加聚量采购领域知识
+
 ## [1.0.0] - 2026-03-19
 
 ### Changed
