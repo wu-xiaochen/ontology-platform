@@ -1,43 +1,42 @@
-# 更新日志
+# Changelog
 
-所有重要的项目更新都将记录在此文件中。
+All notable changes to ontology-platform will be documented in this file.
 
-## [2026-03-19] v0.3.0 - 供应链领域强化
+## [1.0.0] - 2026-03-19
 
-### 新增
-- ontology-clawra v3.4 发布
-- 供应链推理场景：
-  - `supplier_risk_evaluation.py` - 供应商风险评估
-  - `purchase_price_analysis.py` - 采购价格分析
-  - `contract_review.py` - 合同条款审查
-- 采购供应链本体 v2.0
-- MVP PRD v0.2
+### Changed
+- **愿景升级**：从"知识图谱平台"重新定位为"Agent成长框架"
+- **架构重构**：新增三大核心模块（Memory-System / Reasoning-Engine / Meta-Cognition）
+- **README重写**：全新愿景陈述
+- **架构文档**：新增 docs/architecture.md
+- **PRD升级**：v2 → v3.0，全新愿景版
+- **License**：MIT → Partial Open Source License（部分开源）
 
-### 优化
-- 主动学习机制增强
-- 置信度追踪完善
-- 运营机制文档化
+### Added
+- **三大核心能力**：
+  - 学习特性：本体自学习/自更新/自构建
+  - 推理能力：逻辑推理 + 因果推理
+  - 元认知：置信度自知 + 知识边界识别
+- **差异化定位**：明确与Mem0/RAG/知识图谱的区别
+- **部分开源协议**：商业应用需授权
 
-## [2026-03-16] v0.2.0 - 本体论引擎完善
+### Fixed
+- 项目定位不清晰问题
+- 缺少愿景驱动问题
 
-### 新增
+## [0.9.0] - 2026-03-16
+
+### Added
 - ontology-clawra v3.3
-- 科学推理方法论
-- 置信度标注系统
-- 54+ 领域本体
+- 供应链领域本体库
+- PRD v2
 
-### 优化
-- 推理引擎性能提升
-- 文档完善
+## [0.8.0] - 2026-03-14
 
-## [2026-03-10] v0.1.0 - 项目初始化
-
-### 新增
-- 项目基础架构
-- RDF/OWL 本体存储
-- GraphQL API
-- Neo4j 集成
+### Added
+- 初始项目结构
+- 领域本体库
 
 ---
 
-**注意**：语义化版本遵循 [SemVer](https://semver.org/) 规范。
+*format: [version] - [date]*

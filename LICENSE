@@ -1,21 +1,73 @@
-# MIT License
+# Partial Open Source License
+# 部分开源协议 v1.0
 
-Copyright (c) 2026 wu-xiaochen
+**ontology-platform - Agent成长框架**
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Copyright (c) 2026 wu-xiaochen. All rights reserved.
+
+---
+
+## 许可条款
+
+**免费使用（允许）**：
+- 个人学习、研究、教育用途
+- 公开项目演示、非商业性技术分享
+- 在开放平台（如GitHub）进行公开开发协作
+
+**需要授权（禁止）**：
+- ⚠️ 任何商业产品或服务中的集成使用
+- ⚠️ 以营利为目的的商业应用（包括SaaS、私有化部署给第三方）
+- ⚠️ 闭源项目或私有项目中的使用
+- ⚠️ 对外提供API服务或SDK服务
+- ⚠️ 作为独立产品或核心组件销售
+
+**申请授权**：
+如需商用或实际应用（非测试/研究），请联系作者获取授权：
+- GitHub Issue: 提交授权申请
+- Email: [待定]
+
+---
+
+## 背景理念
+
+我们相信：AI Agent应该像孩子一样拥有真正的成长能力，
+而不是只能在训练中获得能力。
+
+ontology-platform是这个信念的生产级实现。
+
+我们选择"部分开源"是因为：
+1. 确保技术不被用于制造"AI幻觉"产品
+2. 保证开发方向的公益性
+3. 同时允许社区参与和技术传播
+
+---
+
+## 核心许可描述
+
+```
+开放层级：
+├── ✅ 完全开放：源代码、学习、研究、教育
+├── ⚠️ 需授权：商业集成、私有部署、SaaS服务
+└── 🚫 禁止：去掉署名、闭源fork、非法使用
+```
+
+---
+
+## 商标声明
+
+"ontology-platform" 是注册商标。
+未经授权不得用于商业产品名称。
+
+---
+
+## 免责条款
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+---
+
+*最后更新：2026-03-19*
+*版本：v1.0*
