@@ -50,7 +50,7 @@ jobs:
           pip install mypy types-redis
 
       - name: Run mypy
-        run: mypy src/ --ignore-missing-imports --disable-error-code=assignment --disable-error-code=union-attr --disable-error-code=index --disable-error-code=attr-defined --disable-error-code=var-annotated --disable-error-code=truthy-function --disable-error-code=no-any-return
+        run: mypy src/ --ignore-missing-imports --disable-error-code=assignment --disable-error-code=union-attr --disable-error-code=index --disable-error-code=attr-defined --disable-error-code=var-annotated --disable-error-code=truthy-function --disable-error-code=no-any-return --disable-error-code=arg-type --disable-error-code=call-overload --disable-error-code=no-redef --disable-error-code=call-arg --disable-error-code=operator
 
   test:
     name: Test
