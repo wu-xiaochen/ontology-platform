@@ -9,9 +9,9 @@
 输出: 条款合规性评估、风险点识别、修改建议
 """
 
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from typing import List, Optional
+from dataclasses import dataclass
+from datetime import datetime
 import re
 
 @dataclass
