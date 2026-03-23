@@ -1669,40 +1669,6 @@ class CacheCreateRequest(BaseModel):
     default_ttl: float = 3600
 
 
-@app.get("/api/v1/performance/cache/two-level")
-async def get_two_level_cache_stats():
-    """获取两级缓存统计"""
-    return query_cache.stats()
-
-
-@app.get("/api/v1/performance/cache/debug")
-async def get_debug_cache_stats():
-    """获取调试缓存统计"""
-    return debug_cache.stats()
-
-
-@app.get("/api/v1/performance/cache/debug/log")
-async def get_cache_access_log(limit: int = Query(100, ge=1, le=1000)):
-    """获取缓存访问日志"""
-    return {"access_log": debug_cache.get_access_log(limit)}
-
-
-@app.post("/api/v1/performance/cache/clear-all")
-async def clear_all_caches():
-    """清除所有缓存"""
-    inference_cache.clear()
-    query_cache.clear()
-    debug_cache.clear()
-    return {"message": "All caches cleared"}
-
-
-@app.post("/api/v1/performance/cache/invalidate")
-async def invalidate_cache_by_tag(tag: str = Body(...)):
-    """通过标签使缓存失效"""
-    inference_cache.invalidate_by_tag(tag)
-    return {"message": f"Cache invalidated for tag: {tag}"}
-
-
 @app.post("/api/v1/performance/cache/create")
 async def create_custom_cache(request: CacheCreateRequest):
     """创建自定义缓存"""
