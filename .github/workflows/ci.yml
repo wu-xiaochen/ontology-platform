@@ -50,7 +50,7 @@ jobs:
           pip install mypy types-redis
 
       - name: Run mypy
-        run: mypy src/ --ignore-missing-imports --namespace-packages
+        run: mypy src/ --ignore-missing-imports
 
   test:
     name: Test
