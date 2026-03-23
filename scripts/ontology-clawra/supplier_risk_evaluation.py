@@ -188,7 +188,7 @@ def generate_recommendations(supplier: Supplier, risk_factors: List[Dict], risk_
 def print_risk_report(supplier: Supplier, result: RiskResult):
     """打印风险评估报告"""
     print("=" * 60)
-    print(f"📊 供应商风险评估报告")
+    print("📊 供应商风险评估报告")
     print("=" * 60)
     print(f"供应商: {supplier.name} (ID: {supplier.supplier_id})")
     print(f"类别: {supplier.category}")

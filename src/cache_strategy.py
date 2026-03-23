@@ -15,14 +15,12 @@ import json
 import hashlib
 import logging
 import asyncio
-from typing import Dict, Any, Optional, Callable, TypeVar, Generic, List, Set
+from typing import Dict, Any, Optional, Callable, TypeVar, Generic, List
 from dataclasses import dataclass, field
 from functools import wraps
 from collections import OrderedDict
 from threading import Lock
-from datetime import datetime, timedelta
 from enum import Enum
-import weakref
 
 logger = logging.getLogger(__name__)
 
@@ -406,7 +404,7 @@ class RedisCache(BaseCache[T]):
     def stats(self) -> Dict[str, Any]:
         """Get Redis cache statistics"""
         try:
-            info = self._client.info("stats")
+            self._client.info("stats")
             total = self._hits + self._misses
             hit_rate = self._hits / total if total > 0 else 0
             

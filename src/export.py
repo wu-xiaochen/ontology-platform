@@ -9,7 +9,7 @@ import csv
 import json
 import io
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -87,7 +87,6 @@ class DataExporter:
                 entities = self.neo4j_client.query_by_properties(label, {})
             else:
                 # Get all entities - simplified
-                stats = self.neo4j_client.get_stats()
                 entities = []
         
         # Apply limit

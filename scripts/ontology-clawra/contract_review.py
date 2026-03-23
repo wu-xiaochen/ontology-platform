@@ -346,7 +346,7 @@ def review_gas_special_terms(contract: Contract) -> ClauseReview:
 def print_contract_review_report(contract: Contract, result: ContractReviewResult):
     """打印合同审查报告"""
     print("=" * 70)
-    print(f"📜 合同条款审查报告")
+    print("📜 合同条款审查报告")
     print("=" * 70)
     print(f"合同编号: {contract.contract_id}")
     print(f"合同类型: {contract.contract_type}")

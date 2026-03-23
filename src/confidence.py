@@ -3,10 +3,11 @@
 基于证据的置信度评估和推理链置信度传播
 """
 
-import math
 from dataclasses import dataclass, field
 from typing import Any, Optional
-from collections import defaultdict
+
+# D-S 证据理论中的不确定性标记
+Unknown = "__Unknown__"
 
 
 @dataclass
@@ -169,9 +170,6 @@ class ConfidenceCalculator:
         
         计算信度函数和似真度
         """
-        # 基本概率分配
-        m = {}  # mass function
-        
         # 组合所有证据
         combined_m = {True: 0.0, False: 0.0, Unknown: 1.0}
         
@@ -183,9 +181,9 @@ class ConfidenceCalculator:
             for h1, m1 in combined_m.items():
                 for h2 in [True, False, Unknown]:
                     m2 = 0.0
-                    if h2 == True:
+                    if h2 is True:
                         m2 = belief
-                    elif h2 == False:
+                    elif h2 is False:
                         m2 = 0.0
                     else:
                         m2 = 1 - belief

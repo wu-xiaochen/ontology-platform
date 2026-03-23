@@ -10,7 +10,7 @@ v1.0.0 - Initial version
 """
 
 import logging
-from typing import Dict, List, Optional, Set, Callable
+from typing import Dict, List, Optional, Set
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime

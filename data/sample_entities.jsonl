@@ -1,0 +1,5 @@
+{"id": "entity:person:001", "type": "Person", "name": "张三", "role": "工程师", "properties": {"skill": ["Python", "AI"], "experience_years": 5}}
+{"id": "entity:person:002", "type": "Person", "name": "李四", "role": "产品经理", "properties": {"skill": ["产品设计", "数据分析"], "experience_years": 8}}
+{"id": "entity:project:001", "type": "Project", "name": "本体平台v3", "status": "进行中", "properties": {"start_date": "2026-01-01", "team_size": 5}}
+{"id": "entity:rule:001", "type": "Rule", "name": "技能匹配规则", "condition": "person.skill contains project.required_skill", "weight": 0.8, "source": "HR系统"}
+{"id": "entity:concept:001", "type": "Concept", "name": "本体论", "definition": "关于存在及其本质的哲学分支", "domain": "哲学"}

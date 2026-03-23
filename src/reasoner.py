@@ -6,7 +6,7 @@
 import re
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Optional, Callable
+from typing import Any, Optional
 from collections import defaultdict
 from enum import Enum
 
@@ -462,10 +462,7 @@ class Reasoner:
         if not vars_in_pattern:
             return None
         
-        # 简单匹配: pattern 中第一个变量匹配 subject
-        substitutions = {}
-        
-        # 检查 pattern 是否包含这个三元组
+        # 检查 pattern 中第一个变量匹配 subject
         # 格式: (?x ?p ?y) 或 (?s ?p ?o)
         if '?x' in pattern and '?y' in pattern:
             # (?x ?p ?y) 匹配当前事实
@@ -592,7 +589,7 @@ class Reasoner:
             可读的解释
         """
         lines = []
-        lines.append(f"推理完成:")
+        lines.append("推理完成:")
         lines.append(f"  推导出 {len(result.conclusions)} 个结论")
         lines.append(f"  使用了 {len(result.facts_used)} 个事实")
         lines.append(f"  推理深度: {result.depth}")

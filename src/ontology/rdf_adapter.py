@@ -13,12 +13,11 @@ import json
 import re
 import logging
 from pathlib import Path
-from typing import Any, Optional, Dict, List, Set, Union
+from typing import Any, Optional, Dict, List, Set
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from collections import defaultdict
-import uuid
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -330,13 +329,13 @@ class RDFAdapter:
         
         # v3.3新增：自动提取类定义
         if predicate in ["type", "a", "rdf:type", "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"]:
-            self._extract_class_from_instance(subject, obj)
+            self._extract_class_from_instance(subject, obj, data)
         
         # 自动提取概念
         if data.get("concept"):
             self._extract_concept(subject, data["concept"])
     
-    def _extract_class_from_instance(self, instance_uri: str, class_uri: str):
+    def _extract_class_from_instance(self, instance_uri: str, class_uri: str, data: Dict):
         """从实例提取类定义"""
         class_label = class_uri.split("#")[-1] if "#" in class_uri else class_uri
         

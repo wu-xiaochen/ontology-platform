@@ -8,7 +8,6 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 from dataclasses import dataclass, field
-from collections import defaultdict
 
 
 @dataclass

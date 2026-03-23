@@ -1,0 +1,4 @@
+{"id": "rel:001", "type": "WORKS_ON", "start_node": "entity:person:001", "end_node": "entity:project:001", "properties": {"role": "技术负责人"}, "confidence": 0.9}
+{"id": "rel:002", "type": "WORKS_ON", "start_node": "entity:person:002", "end_node": "entity:project:001", "properties": {"role": "产品负责人"}, "confidence": 0.95}
+{"id": "rel:003", "type": "HAS_SKILL", "start_node": "entity:person:001", "end_node": "entity:concept:ai", "properties": {"level": "高级"}, "confidence": 0.85}
+{"id": "rel:004", "type": "DEPENDS_ON", "start_node": "entity:project:001", "end_node": "entity:concept:001", "properties": {"dependency_type": "理论支撑"}, "confidence": 0.7}

@@ -11,17 +11,16 @@ Neo4j客户端 (Neo4j Client)
 """
 
 import logging
-from typing import Any, Optional, Dict, List, Set, Union
+from typing import Any, Optional, Dict, List, Set
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from contextlib import contextmanager
 from collections import defaultdict
-import json
 
 # Neo4j驱动（可选安装）
 try:
-    from neo4j import GraphDatabase, Driver, Session, Transaction, Result
+    from neo4j import GraphDatabase, Driver, Transaction
     NEO4J_AVAILABLE = True
 except ImportError:
     NEO4J_AVAILABLE = False
@@ -869,8 +868,7 @@ class Neo4jClient:
         def work(tx: Transaction):
             for op in operations:
                 op_type = op.get("operation")
-                params = op.get("params", {})
-                
+
                 if op_type == "create_entity":
                     # 创建实体
                     pass

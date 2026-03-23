@@ -413,7 +413,6 @@ async def generic_exception_handler(
 
 def setup_exception_handlers(app):
     """Register exception handlers with FastAPI app"""
-    from fastapi import FastAPI
     
     app.add_exception_handler(OntologyPlatformException, ontology_platform_exception_handler)
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)

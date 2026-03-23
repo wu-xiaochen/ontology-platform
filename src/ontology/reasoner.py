@@ -6,7 +6,6 @@ Provides inference capabilities based on rules and confidence tracking
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
-import json
 
 class ConfidenceLevel(Enum):
     CONFIRMED = "CONFIRMED"

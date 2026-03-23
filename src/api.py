@@ -1,8 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from typing import Dict, Any
 from pydantic import BaseModel
-import os
-import json
 from datetime import datetime
 
 app = FastAPI(title="Ontology Platform API", version="1.0.0")
@@ -229,6 +227,23 @@ async def assess_risk(params: Dict[str, Any]) -> Dict[str, Any]:
         "recommendations": recommendations
     }
 
+async def generate_emergency_plan(params: Dict[str, Any]) -> Dict[str, Any]:
+    """应急预案生成逻辑"""
+    facility_type = params.get("facility_type", "")
+    hazard_level = params.get("hazard_level", 0)
+    
+    plan = {
+        "facility_type": facility_type,
+        "hazard_level": hazard_level,
+        "emergency_level": "高" if hazard_level > 7 else "中" if hazard_level > 4 else "低",
+        "recommendations": [
+            "启动应急预案",
+            "组织人员疏散",
+            "通知应急部门"
+        ]
+    }
+    return plan
+
 async def analyze_financial_risk(query: str, params: Dict[str, Any]) -> Dict[str, Any]:
     """金融风险分析引擎"""
     # 金融风险分析特定逻辑
@@ -271,6 +286,28 @@ async def assess_credit(params: Dict[str, Any]) -> Dict[str, Any]:
         "credit_score": credit_score,
         "payment_history": payment_history,
         "credit_level": credit_level,
+        "recommendations": recommendations
+    }
+
+async def recommend_investment(params: Dict[str, Any]) -> Dict[str, Any]:
+    """投资建议逻辑"""
+    risk_tolerance = params.get("risk_tolerance", "中")
+    investment_amount = params.get("investment_amount", 0)
+    
+    recommendations = []
+    if risk_tolerance == "高":
+        recommendations.append("建议高风险高回报项目")
+        recommendations.append("考虑股票型基金")
+    elif risk_tolerance == "中":
+        recommendations.append("建议平衡型投资")
+        recommendations.append("考虑债券型基金")
+    else:
+        recommendations.append("建议低风险投资")
+        recommendations.append("考虑货币基金或定期存款")
+    
+    return {
+        "risk_tolerance": risk_tolerance,
+        "investment_amount": investment_amount,
         "recommendations": recommendations
     }
 

@@ -18,8 +18,7 @@ from dataclasses import dataclass, field
 from functools import wraps
 from collections import OrderedDict
 from threading import Lock
-from datetime import datetime, timedelta
-import weakref
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 

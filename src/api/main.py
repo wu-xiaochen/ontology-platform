@@ -36,8 +36,7 @@ from pathlib import Path
 from typing import Any, Optional, Dict, List
 from datetime import datetime
 from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
-from enum import Enum
+from dataclasses import dataclass
 
 from fastapi import FastAPI, HTTPException, Depends, Query, Body, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,30 +44,28 @@ from fastapi.security import APIKeyHeader
 from fastapi.openapi.utils import get_openapi
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
-from typing import Union
 
 # 导入项目模块
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.ontology.rdf_adapter import RDFAdapter, RDFTriple, OntologySchema
-from src.ontology.neo4j_client import Neo4jClient, GraphNode, GraphRelationship
+from src.ontology.rdf_adapter import RDFAdapter
+from src.ontology.neo4j_client import Neo4jClient
 from src.loader import OntologyLoader
-from src.reasoner import Reasoner, Fact, InferenceResult
-from src.confidence import ConfidenceCalculator, Evidence, ConfidenceResult
+from src.reasoner import Reasoner, Fact
+from src.confidence import ConfidenceCalculator, Evidence
 
 # 导入新模块
-from src.monitoring import metrics, health_checker, request_logger, performance_monitor
+from src.monitoring import metrics, request_logger, performance_monitor
 from src.security import (
     api_key_manager, rate_limiter, ip_blocker, 
-    SecurityHeaders, InputValidator, audit_logger, cors_config
+    SecurityHeaders, audit_logger, cors_config
 )
 from src.performance import (
-    inference_cache, cached, profiler, 
-    optimization_config, resource_manager
+    inference_cache
 )
-from src.export import DataExporter, ExportFormat, ExportOptions, data_exporter
-from src.permissions import permission_manager, Permission, Resource, ResourceType
+from src.export import DataExporter, ExportFormat, ExportOptions
+from src.permissions import permission_manager, Permission
 
 # 定义logger用于模块级导入错误
 _import_logger = logging.getLogger(__name__)
@@ -83,7 +80,7 @@ except ImportError as e:
 
 # 导入主动学习引擎 (v3.3新增)
 try:
-    from src.ontology.auto_learn import auto_learn_engine, AutoLearnEngine, ConfidenceLevel
+    from src.ontology.auto_learn import auto_learn_engine, ConfidenceLevel
     AUTO_LEARN_AVAILABLE = True
 except ImportError as e:
     AUTO_LEARN_AVAILABLE = False
@@ -92,14 +89,10 @@ from src.caching import query_cache, debug_cache, create_cache
 
 # 导入错误处理和缓存策略
 from src.errors import (
-    setup_exception_handlers, error_handler,
-    ErrorResponse, ErrorCode, ErrorSeverity,
-    OntologyPlatformException, NotFoundException, ValidationException,
-    UnauthorizedException, ForbiddenException, RateLimitException
+    setup_exception_handlers, error_handler
 )
 from src.cache_strategy import (
-    EnhancedLRUCache, TwoLevelCache, RedisCache, CacheWarmer,
-    CacheConfig, CacheStrategy, create_cache as create_enhanced_cache
+    CacheConfig
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -403,9 +396,10 @@ if GRAPHQL_AVAILABLE:
         graphql_router = GraphQLRouter(
             graphql_schema,
             context_getter=graphql_context,
+            response_model=None,  # Disable response model validation for GraphQL
         )
         app.include_router(graphql_router, prefix="/api/graphql")
-        logger.info("GraphQL endpoint added at /api/graphql/graphql")
+        logger.info("GraphQL endpoint added at /api/graphql")
     except Exception as e:
         logger.warning(f"GraphQL router setup failed: {e}")
 
@@ -1713,7 +1707,7 @@ async def invalidate_cache_by_tag(tag: str = Body(...)):
 async def create_custom_cache(request: CacheCreateRequest):
     """创建自定义缓存"""
     try:
-        cache = create_cache(
+        create_cache(
             cache_type=request.cache_type,
             max_size=request.max_size,
             default_ttl=request.default_ttl

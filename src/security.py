@@ -4,12 +4,10 @@ Provides authentication, authorization, rate limiting, and security middleware
 """
 
 import time
-import hashlib
 import secrets
 import logging
 from typing import Dict, Optional, Set, List, Callable
 from dataclasses import dataclass, field
-from enum import Enum
 from collections import defaultdict
 from threading import Lock
 from functools import wraps
@@ -70,7 +68,7 @@ class APIKeyManager:
         with self._key_lock:
             if key in self._keys:
                 del self._keys[key]
-                logger.info(f"Revoked API key")
+                logger.info("Revoked API key")
                 return True
         return False
     
@@ -328,7 +326,6 @@ def require_api_key():
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            from fastapi import Header, HTTPException
             
             api_key = kwargs.get("x_api_key") or kwargs.get("api_key")
             
@@ -348,7 +345,6 @@ def rate_limit(requests_per_minute: int = None):
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            from fastapi import HTTPException
             
             # Get identifier (usually IP or user ID)
             # This is handled by middleware in practice

@@ -11,7 +11,7 @@
 
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 
 @dataclass
 class Material:
@@ -193,7 +193,7 @@ def print_price_analysis_report(
 ):
     """打印价格分析报告"""
     print("=" * 70)
-    print(f"💰 采购价格分析报告")
+    print("💰 采购价格分析报告")
     print("=" * 70)
     print(f"物料: {material.name} (ID: {material.material_id})")
     print(f"类别: {material.category}")
