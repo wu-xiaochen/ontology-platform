@@ -56,7 +56,7 @@ def run_demo():
         "conclusion": "同时存在交付风险和质量风险，优先评估",
         "weight": 0.95
     })
-    print(f"    ✓ 3 reasoning rules loaded")
+    print("    ✓ 3 reasoning rules loaded")
     
     # 4. 查询供应商
     print("\n[2] Querying suppliers...")
