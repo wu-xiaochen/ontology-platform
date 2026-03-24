@@ -2,7 +2,31 @@
 
 All notable changes to ontology-platform will be documented in this file.
 
-## [1.1.0] - 2026-03-19
+## [1.2.0] - 2026-03-24
+
+### Added
+- **RDF适配器 (rdf_adapter.py)** - 1087行:
+  - OWL/RDF标准支持：RDFTriple, RDFTerm, OntologySchema数据模型
+  - JSONL到RDF转换：load_jsonl(), 自动类提取
+  - RDF序列化：Turtle, JSON-LD格式输出
+  - 本体Schema定义：OntologyClassDef, OntologyPropertyDef
+  - 置信度传播：source tracking, confidence scoring
+
+- **Neo4j客户端 (neo4j_client.py)** - 936行:
+  - Neo4j Python驱动集成（可选无驱动模式）
+  - 实体CRUD：create_entity, get_entity, update_entity, delete_entity
+  - 关系CRUD：create_relationship, get_relationships, delete_relationship
+  - 图查询API：find_neighbors, find_paths, find_shortest_path
+  - 推理链追溯：InferencePath, trace_inference
+  - 置信度传播算法
+
+- **API服务化 (main.py)** - 1695行:
+  - FastAPI框架：完整RESTful端点设计
+  - GraphQL支持：Strawberry集成（可选）
+  - Swagger/OpenAPI文档
+  - API密钥认证、Rate Limiting、IP Blocking
+  - Prometheus监控、请求日志、性能优化
+  - 全局错误处理、缓存策略
 
 ### Added
 - **聚量采购（Volume Pooling）领域本体**：新增采购供应链本体第七章
