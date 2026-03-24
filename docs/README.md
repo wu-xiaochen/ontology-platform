@@ -6,15 +6,10 @@
 
 | 文件 | 说明 |
 |------|------|
-| `architecture-v2.md` | 系统架构设计文档 |
+| `architecture.md` | 系统架构设计文档 |
 | `roadmap.md` | 产品路线图 |
-| `competitive-analysis.md` | 竞品分析报告 |
-| `market-opportunity.md` | 市场机会分析 |
-| `palantir-target.md` | Palantir对标分析 |
+| `competitor-analysis-2025.md` | 竞品分析报告 |
 | `prd-v2.md` | 产品需求文档 |
-| `user-research.md` | 用户调研报告 |
-| `tech-barriers.md` | 技术壁垒分析 |
-| `business-model-canvas.md` | 商业模式画布 |
 
 ## 快速链接
 
