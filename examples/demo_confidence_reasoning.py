@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from confidence import ConfidenceCalculator, ConfidenceResult, Evidence
+from confidence import ConfidenceCalculator, Evidence
 
 
 def demo_basic_confidence():
@@ -37,8 +37,8 @@ def demo_basic_confidence():
     ]
     result = calc.calculate(evidence_single, method="weighted")
     print(f"\n单证据源置信度: {result.value:.2%}")
-    print(f"  来源: ERP系统 (可靠性: 0.95)")
-    print(f"  计算方法: weighted")
+    print("  来源: ERP系统 (可靠性: 0.95)")
+    print("  计算方法: weighted")
     
     # 多证据源
     evidence_multi = [
@@ -48,7 +48,7 @@ def demo_basic_confidence():
     ]
     result = calc.calculate(evidence_multi, method="weighted")
     print(f"\n多证据源置信度: {result.value:.2%}")
-    print(f"  来源: ERP系统 + 历史合同 + 行业报告")
+    print("  来源: ERP系统 + 历史合同 + 行业报告")
     print(f"  证据数量: {result.evidence_count}")
     
     return result
@@ -84,7 +84,7 @@ def demo_evidence_analysis():
     ]
     result_conflict = calc.calculate(evidence_conflict)
     print(f"矛盾证据: {result_conflict.value:.2%}")
-    print(f"  → 系统检测到冲突，置信度降低")
+    print("  → 系统检测到冲突，置信度降低")
     
     return result_conflict
 
@@ -105,10 +105,10 @@ def demo_business_scenario():
     ]
     result_a = calc.calculate(evidence_a)
     
-    print(f"\n供应商A:")
+    print("\n供应商A:")
     print(f"  置信度: {result_a.value:.2%}")
     print(f"  证据数: {result_a.evidence_count}")
-    print(f"  → 决策: 可信任，建议合作")
+    print("  → 决策: 可信任，建议合作")
     
     # 供应商B评估 - 低置信度
     evidence_b = [
@@ -116,10 +116,10 @@ def demo_business_scenario():
     ]
     result_b = calc.calculate(evidence_b)
     
-    print(f"\n供应商B:")
+    print("\n供应商B:")
     print(f"  置信度: {result_b.value:.2%}")
     print(f"  证据数: {result_b.evidence_count}")
-    print(f"  → 决策: 需要更多数据，建议深入调查")
+    print("  → 决策: 需要更多数据，建议深入调查")
 
 
 def demo_auto_learning():
@@ -141,13 +141,13 @@ def demo_auto_learning():
     calc.set_source_weight("ERP", 0.95)  # 提高到95%
     updated = calc.calculate(evidence)
     print(f"用户确认后: {updated.value:.2%}")
-    print(f"  → 系统学习: ERP系统可靠性提升")
+    print("  → 系统学习: ERP系统可靠性提升")
     
     # 用户纠正结果错误 -> 降低置信度
     calc.set_source_weight("ERP", 0.80)  # 降低到80%
     corrected = calc.calculate(evidence)
     print(f"纠正后: {corrected.value:.2%}")
-    print(f"  → 系统学习: ERP系统可靠性需要修正")
+    print("  → 系统学习: ERP系统可靠性需要修正")
 
 
 def main():

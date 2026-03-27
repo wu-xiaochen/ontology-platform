@@ -19,7 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from confidence import ConfidenceCalculator, Evidence
 from loader import OntologyLoader
-from export import DataExporter
 
 
 def main():
