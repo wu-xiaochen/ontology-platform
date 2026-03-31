@@ -11,7 +11,7 @@ from collections import defaultdict
 from enum import Enum
 
 try:
-    from loader import OntologyLoader, OntologyClass, OntologyProperty, OntologyIndividual
+    from .loader import OntologyLoader, OntologyClass, OntologyProperty, OntologyIndividual
 except ImportError:
     # 兼容处理
     OntologyLoader = None
@@ -20,7 +20,7 @@ except ImportError:
     OntologyIndividual = None
     
 try:
-    from confidence import ConfidenceCalculator, ConfidenceResult, Evidence
+    from ..eval.confidence import ConfidenceCalculator, ConfidenceResult, Evidence
 except ImportError:
     # 如果confidence模块不存在，创建兼容的类
     from dataclasses import dataclass
@@ -736,7 +736,7 @@ def create_sample_reasoner() -> Reasoner:
 
 
 # 导入需要的函数
-from loader import create_sample_ontology
+from .loader import create_sample_ontology
 
 
 # 测试代码

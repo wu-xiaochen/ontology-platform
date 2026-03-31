@@ -3,7 +3,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from reasoner import (Rule, Fact, InferenceResult, Reasoner, RuleType)
+from core.reasoner import (Rule, Fact, InferenceResult, Reasoner, RuleType)
 
 
 class TestRule:

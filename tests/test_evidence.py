@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from confidence import ConfidenceCalculator, Evidence
+from eval.confidence import ConfidenceCalculator, Evidence
 
 
 def test_source_weight_adjustment():

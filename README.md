@@ -1,171 +1,94 @@
-# ontology-platform
+# 🛡️ Clawra: Cognitive Logical Agent with Reasoning & Autonomy
 
-**The first agent framework with a built-in bullshit detector.**
+[![GitHub stars](https://img.shields.io/github/stars/wu-xiaochen/AbilityBuilder-Agent?style=for-the-badge)](https://github.com/wu-xiaochen/AbilityBuilder-Agent/stargazers)
+[![License](https://img.shields.io/github/license/wu-xiaochen/AbilityBuilder-Agent?style=for-the-badge)](https://github.com/wu-xiaochen/AbilityBuilder-Agent/blob/main/LICENSE)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 
-[![PyPI Version](https://img.shields.io/pypi/v/ontology-platform?color=blue)](https://pypi.org/project/ontology-platform/)
-[![5-Minute Quickstart](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/wu-xiaochen/ontology-platform/blob/main/ontology_platform_quickstart.ipynb)
+**Clawra** is a next-generation, neuro-symbolic framework for autonomous agents that eliminates LLM hallucinations through formal ontology-based reasoning. It enables agents to "think" with logical rigor and "grow" like a child through a self-evolving knowledge architecture.
+
+> [!IMPORTANT]
+> **Why Clawra?** While traditional LLM agents rely on probabilistic next-token generation, Clawra provides **symbolic guardrails**, ensuring that every decision is backed by formal logic and verifiable confidence.
+
+---
+
+## 🏗️ Architecture
+
+![Clawra Architecture](/Users/xiaochenwu/.gemini/antigravity/brain/352ce967-ddbc-4691-94ed-82b926053b27/clawra_architecture_diagram_1774926829154.png)
+
+```mermaid
+graph TD
+    User((User)) --> Perception[Perception Layer: Knowledge Extraction]
+    Perception --> Core[Core Reasoning: Hybrid Forward/Backward Chaining]
+    Core --> Agents[Cognitive Agents: Metacognitive Reflection]
+    Agents --> LLM[LLM Engine: Multimodal Interaction]
+    LLM --> Evolution[Evolution Layer: Self-Growth & Distillation]
+    Evolution --> Memory[Multi-tier Memory: Episodic & Semantic]
+    Memory --> Core
+```
 
 ---
 
-## 🎯 The Problem
+## 🌟 Key Features
 
-Your AI agent is hallucinating. **And it doesn't even know it.**
-
-Traditional frameworks (LangChain, Mem0, RAG) give your agent memory, but not judgment. They retrieve information and generate confident-sounding answers—even when they're completely wrong.
-
-
-
-
-Traditional Agent:
-Q: "Should we trust Supplier_C?"
-A: "Yes, they have a good track record."  ← Hallucinated. Actually has 40% defect rate.
-Confidence: Unknown (LLM just sounds confident)
+-   **🧠 Neuro-Symbolic Core**: Fuses the generative flexibility of LLMs with the deterministic precision of RDF/OWL logic.
+-   **📈 Self-Evolving Ontology**: A "growing mind" that autonomously distills structured knowledge from every interaction.
+-   **🛡️ Hallucination Guardrails**: Real-time logical verification that blocks inconsistent or groundless responses.
+-   **🕵️ Metacognitive Perception**: Agents that "reflect" on their own reasoning paths before acting.
+-   **📁 Multi-tier Memory**: Seamless management of Episodic (experience) and Semantic (knowledge) memory.
 
 ---
-## 💡 The Solution
-**ontology-platform** is the only agent framework with **metacognition**—it knows what it knows, and more importantly, what it *doesn't* know.
 
+## 🚀 Quick Start
 
-python
-from ontology import Agent
-
-agent = Agent()
-
-result = agent.ask("Should we trust Supplier_C?")
-
-print(f"Verdict: {result.conclusion}")
-→ "HIGH_RISK: Do not proceed without backup supplier"
-print(f"Confidence: {result.confidence:.2f}")
-→ 0.89 (CONFIRMED)
-print(f"Reasoning:")
-for step in result.reasoning_chain:
-print(f"  • {step}")
-→ • on_time_rate = 0.72 < 0.85 threshold
-
-→ • quality_score = 0.61 < 0.80 threshold
-→ • Rule "combined_risk" triggered
-When the agent is uncertain, **it tells you**:
-
-
-python
-result = agent.ask("What's the quantum computing outlook for 2027?")
-
-print(f"Confidence: {result.confidence:.2f}")
-→ 0.43 (SPECULATIVE)
-print(f"Agent says: {result.verdict}")
-→ "I don't have enough reliable information. Consult domain expert."
----
-## ⚡ Quick Start
-**Try it now (5 minutes):** [Open in Colab](https://colab.research.google.com/github/wu-xiaochen/ontology-platform/blob/main/ontology_platform_quickstart.ipynb)
 ### Installation
 
+```bash
+pip install clawra
+```
 
-bash
-pip install ontology-platform
+### Basic Usage: Logical Reasoning
 
-### Hello World
+```python
+from clawra.core import Reasoner, Fact
+from clawra.agents import MetacognitiveAgent
 
-
-python
-from ontology import Agent
-
-agent = Agent()
-Teach the agent something
-agent.learn({
-"type": "Supplier",
-"id": "SUP001",
-"properties": {
-"name": "Acme Components",
-"on_time_rate": 0.91,
-"quality_score": 0.88
-}
+# 1. Initialize the Reasoning Brain
+reasoner = Reasoner()
+reasoner.add_rule_from_dict({
+    "id": "risk_rule",
+    "condition": "(?supplier has_quality_score ?score) AND (?score < 0.7)",
+    "conclusion": "(?supplier status high_risk)"
 })
-Add reasoning rules
-agent.add_rule({
-"id": "quality_threshold",
-"condition": "quality_score < 0.80",
-"conclusion": "Supplier poses quality risk",
-"confidence": 0.9
-})
-Ask questions
-result = agent.ask("Is SUP001 safe to use?")
-print(result)
+
+# 2. Deploy a Metacognitive Agent
+agent = MetacognitiveAgent(name="AuditBot", reasoner=reasoner)
+
+# 3. Execute with Reflection
+result = await agent.run("Evaluate SupplierA with score 0.65")
+print(result) # Automatically verifies the risk based on ontology
+```
 
 ---
-## 🔥 Why It's Different
-| Capability | LangChain | Mem0 | Traditional RAG | **ontology-platform** |
-|------------|-----------|------|-----------------|----------------------|
-| Memory persistence | ❌ | ✅ | ✅ | ✅ |
-| Structured knowledge | ❌ | ❌ | ❌ | ✅ |
-| **Causal reasoning** | ❌ | ❌ | ❌ | ✅ |
-| **Confidence scoring** | ❌ | ❌ | ❌ | ✅ |
-| **Reasoning trace** | ❌ | ❌ | ❌ | ✅ |
-| **Knows when uncertain** | ❌ | ❌ | ❌ | ✅ |
-| Runtime learning | ❌ | ❌ | ❌ | ✅ |
-**The bottom line:** Other frameworks help your agent *remember*. We help it *think*.
+
+## 🛠️ Roadmap
+
+-   [x] **Module 1: Foundation** - Completed modular 8-layer architecture.
+-   [x] **Module 2: Streaming** - Chunking strategy for large-scale knowledge bases.
+-   [x] **Module 3: Evolution** - Self-learning and knowledge distillation interfaces.
+-   [ ] **Module 4: UI** - Visual reasoning trace dashboard.
+
 ---
-## 🎭 Real-World Examples
-### 1. AI Hiring Assistant
 
-
-python
-agent.ask("Should we hire this candidate?")
-→ Confidence: 0.76 (ASSUMED)
-
-→ "Recommendation: Proceed, but check 2 more references"
-→ Reasoning: Strong technical skills, but limited leadership evidence
-### 2. Medical Second Opinion
-
-
-python
-回复 吴晓辰: 
-你说的 这几个文件/tmp/ontology-platform目录在我本地吗 我没找到
-agent.ask("Could these symptoms indicate diabetes?")
-→ Confidence: 0.58 (SPECULATIVE)
-
-→ "Possible, but insufficient data. Recommend medical consultation."
-→ Knowledge gaps: Blood test results, family history, BMI
-### 3. Investment Risk Analysis
-
-
-python
-agent.ask("Is $TSLA a buy at current price?")
-→ Confidence: 0.45 (SPECULATIVE)
-
-→ "Too many unknown variables. Consult financial advisor."
-→ Uncertainty sources: Market volatility, earnings report pending
----
-## 📚 Documentation
-- **[Quickstart Guide](docs/quickstart.md)** - Get started in 5 minutes
-- **[API Reference](docs/api.md)** - Full API documentation
-- **[Architecture](docs/architecture.md)** - How it works under the hood
-- **[Examples](examples/)** - Real-world use cases
----
 ## 🤝 Contributing
-We welcome contributors! Here's how to help:
 
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Let's build the future of verifiable intelligence together.
 
-bash
-git clone https://github.com/wu-xiaochen/ontology-platform.git
-cd ontology-platform
-pip install -e ".[dev]"
-PYTHONPATH=src python examples/demo_supplier_monitor.py
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
----
-## 💬 Community
-- **Discussions:** [GitHub Discussions](https://github.com/wu-xiaochen/ontology-platform/discussions)
-- **Issues:** [Report bugs or request features](https://github.com/wu-xiaochen/ontology-platform/issues)
-- **Twitter:** [@ontology_platform](https://twitter.com/ontology_platform) (coming soon)
----
 ## 📄 License
-MIT License - See [LICENSE](LICENSE) file.
+
+Clawra is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
 ---
-## 🙏 Acknowledgments
-Built with inspiration from:
-- OWL/RDF semantic web standards
-- Judea Pearl's causal inference work
-- The open-source AI community
----
-**Ready to build agents that think before they speak?**
-[Get Started →](docs/quickstart.md)
+
+<p align="center">
+  Built with ❤️ for the future of Autonomous Intelligence.
+</p>

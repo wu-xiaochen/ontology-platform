@@ -40,6 +40,94 @@ class OntologyIndividual:
     assertions: dict[str, Any] = field(default_factory=dict)
 
 
+class StreamingOntologyLoader:
+    """
+    流式本体加载器 (Streaming Ontology Loader)
+    通过迭代器方式读取本体，降低内存开销
+    """
+    
+    def __init__(self, file_path: str):
+        self.file_path = Path(file_path)
+        self.prefixes: dict[str, str] = {}
+        
+    def stream_entities(self, entity_type: str = "all"):
+        """
+        流式获取实体
+        
+        Args:
+            entity_type: 实体类型 (classes, properties, individuals, all)
+        """
+        if not self.file_path.exists():
+            raise FileNotFoundError(f"文件不存在: {self.file_path}")
+            
+        # 这里实现一个基于生成器的加载逻辑
+        # 对于大规模本体，推荐使用 JSONL 格式 (每行一个 JSON 对象)
+        with open(self.file_path, 'r', encoding='utf-8') as f:
+            if self.file_path.suffix == '.jsonl':
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    item = json.loads(line)
+                    etype, parsed = self._parse_item(item)
+                    if entity_type == "all" or etype == entity_type.rstrip('s'):
+                        yield etype, parsed
+            else:
+                # 简单实现：对于标准 JSON，依然采用一次性加载，或者提示使用 JSONL
+                data = json.load(f)
+                self.prefixes = data.get('prefixes', {})
+                
+                if entity_type in ["classes", "all"]:
+                    for item in data.get('classes', []):
+                        yield "class", self._parse_class(item)
+                
+                if entity_type in ["properties", "all"]:
+                    for item in data.get('properties', []):
+                        yield "property", self._parse_property(item)
+                        
+                if entity_type in ["individuals", "all"]:
+                    for item in data.get('individuals', []):
+                        yield "individual", self._parse_individual(item)
+    
+    def _parse_class(self, data: dict) -> OntologyClass:
+        return OntologyClass(
+            uri=data['uri'],
+            label=data.get('label', data['uri'].split('#')[-1]),
+            super_classes=data.get('super_classes', []),
+            equivalent_classes=data.get('equivalent_classes', []),
+            properties=data.get('properties', {})
+        )
+
+    def _parse_property(self, data: dict) -> OntologyProperty:
+        return OntologyProperty(
+            uri=data['uri'],
+            label=data.get('label', data['uri'].split('#')[-1]),
+            domain=data.get('domain', []),
+            range=data.get('range', []),
+            super_properties=data.get('super_properties', []),
+            property_type=data.get('property_type', 'object')
+        )
+        
+    def _parse_individual(self, data: dict) -> OntologyIndividual:
+        return OntologyIndividual(
+            uri=data['uri'],
+            label=data.get('label', data['uri'].split('#')[-1]),
+            types=data.get('types', []),
+            assertions=data.get('assertions', {})
+        )
+
+    def _parse_item(self, item: dict):
+        """解析 JSONL 中的通用项"""
+        etype = item.get('type')
+        if etype == 'class':
+            return "class", self._parse_class(item)
+        elif etype == 'property':
+            return "property", self._parse_property(item)
+        elif etype == 'individual':
+            return "individual", self._parse_individual(item)
+        return "unknown", item
+
+
 class OntologyLoader:
     """
     本体加载器
