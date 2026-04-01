@@ -2,28 +2,72 @@ import streamlit as st
 import os
 import sys
 import time
+import json
+import asyncio
+import re
 
+# 增加 src 路径
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from core.reasoner import Reasoner, Fact
 from memory.base import SemanticMemory, EpisodicMemory
 from agents.orchestrator import CognitiveOrchestrator
 
-st.set_page_config(page_title="Clawra 认知智能体", page_icon="🧠", layout="wide")
+# =========================================
+# 页面配置：Dark Mode & Wide Layout
+# =========================================
+st.set_page_config(
+    page_title="Clawra | 动力学本体认知引擎", 
+    page_icon="🧠", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# 自定义 CSS：现代感、描边、毛玻璃效果
+st.markdown("""
+<style>
+    .reportview-container {
+        background: #0E1117;
+    }
+    .stMetric {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stChatFloatingInputContainer {
+        bottom: 20px;
+    }
+    .trace-card {
+        border-left: 4px solid #00D4FF;
+        padding-left: 15px;
+        margin-bottom: 20px;
+        background: rgba(0, 212, 255, 0.02);
+    }
+    .agent-tag {
+        background: #FF6B6B;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 @st.cache_resource
 def init_orchestrator():
-    """全局初始化 Clawra 认知中枢"""
+    """初始化 Clawra 认知中枢"""
     reasoner = Reasoner()
+    # 默认预装一些核心公理
     reasoner.facts.append(Fact("System", "status", "online", confidence=1.0))
     
-    # Neo4j 连接凭据（从环境变量读取，默认本地 Docker）
     neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
     neo4j_user = os.getenv("NEO4J_USER", "neo4j")
     neo4j_pass = os.getenv("NEO4J_PASSWORD", "clawra2026")
     
     semantic_mem = SemanticMemory(uri=neo4j_uri, user=neo4j_user, password=neo4j_pass)
-    semantic_mem.connect()  # 主动尝试连接 Neo4j
+    semantic_mem.connect()
     
     episodic_mem = EpisodicMemory()
     return CognitiveOrchestrator(reasoner, semantic_mem, episodic_mem)
@@ -33,268 +77,181 @@ if "orchestrator" not in st.session_state:
 
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "您好！我是 Clawra 企业级认知智能体。您可以向我灌输知识，或者向我提问进行逻辑推导。"}
+        {"role": "assistant", "content": "你好，我是 **Clawra**。我不仅仅是一个对话模型，我是一个具备本体约束和逻辑推导能力的认知智能体。你可以输入业务文档让我存储，或向我咨询复杂的语义关联。"}
     ]
 
 # =========================================
-# 左侧栏：系统状态 + 实时本体图谱
+# Sidebar: 状态监控 & 交互式图谱
 # =========================================
 with st.sidebar:
-    st.title("🧠 Clawra 神经枢纽")
+    st.image("https://img.icons8.com/isometric/100/brain.png", width=80)
+    st.title("Clawra Neural Hub")
+    st.caption("v3.3 Kinetic Edition")
     st.markdown("---")
 
-    # 引擎状态面板
+    # [Gemini Optimization] 提示词自定义
+    with st.expander("🛠️ 认知人格设定 (Prompt Override)"):
+        custom_system_prompt = st.text_area(
+            "System Prompt", 
+            placeholder="留空则使用默认配置...",
+            help="在这里可以强制设定 Agent 的思考逻辑和语气。"
+        )
+
+    # 引擎实时指标
     reasoner = st.session_state.orchestrator.reasoner
     fact_count = len(reasoner.facts)
     
-    col1, col2 = st.columns(2)
-    col1.metric("Reasoner 事实", fact_count)
-    col2.metric("ChromaDB", "✅ Active")
+    m1, m2 = st.columns(2)
+    m1.metric("Reasoner Facts", fact_count)
+    m2.metric("ChromaDB", "Connected")
 
-    neo4j_connected = st.session_state.orchestrator.semantic_memory.is_connected
-    if neo4j_connected:
-        st.success("🟢 Neo4j: Connected")
-        st.link_button("🔗 打开 Neo4j Browser", "http://localhost:7474")
+    if st.session_state.orchestrator.semantic_memory.is_connected:
+        st.success("🟢 Neo4j: Active")
     else:
-        st.warning("🟡 Neo4j: 未连接 (仅本地推理)")
-    st.markdown("---")
-
-    # ================================
-    # 实时本体知识图谱可视化
-    # ================================
-    st.subheader("🕸️ 本体知识图谱")
+        st.warning("🟡 Graph: Local")
     
-    if fact_count > 0:
+    st.markdown("---")
+    st.subheader("🕸️ 交互式本体图谱")
+    
+    # 渲染图谱函数
+    def render_graph_html(height="400px"):
         try:
-            import matplotlib
-            matplotlib.use('Agg')
-            import matplotlib.pyplot as plt
-            import matplotlib.font_manager as fm
-            import networkx as nx
-
-            # F4 修复：配置中文字体（macOS 系统自带）
-            chinese_fonts = ['PingFang SC', 'STHeiti', 'Heiti TC', 'Arial Unicode MS', 'SimHei']
-            font_set = False
-            for font_name in chinese_fonts:
-                matches = [f for f in fm.fontManager.ttflist if font_name in f.name]
-                if matches:
-                    plt.rcParams['font.sans-serif'] = [font_name] + plt.rcParams['font.sans-serif']
-                    plt.rcParams['axes.unicode_minus'] = False
-                    font_set = True
-                    break
-            if not font_set:
-                plt.rcParams['axes.unicode_minus'] = False
-
-            G = nx.DiGraph()
+            from pyvis.network import Network
+            net = Network(height=height, width="100%", bgcolor="#0E1117", font_color="white", directed=True)
+            net.force_atlas_2based()
             for fact in reasoner.facts:
-                G.add_node(fact.subject, node_type="entity")
-                G.add_node(fact.object, node_type="entity")
-                G.add_edge(fact.subject, fact.object, label=fact.predicate, weight=fact.confidence)
+                net.add_node(fact.subject, label=fact.subject, color="#00D4FF", size=20)
+                net.add_node(fact.object, label=fact.object, color="#FF6B6B", size=15)
+                net.add_edge(fact.subject, fact.object, label=fact.predicate, color="#FFFFFF", width=1)
+            path = "temp_graph.html"
+            net.save_graph(path)
+            with open(path, "r", encoding="utf-8") as f:
+                html = f.read()
+            os.remove(path)
+            return html
+        except Exception as e:
+            return f"图谱渲染失败: {e}"
 
-            # 布局优化：增加 k 值使节点更分散
-            pos = nx.spring_layout(G, k=3.0, iterations=50, seed=42)
-            
-            # 创建高清画布
-            fig, ax = plt.subplots(figsize=(8, 6), dpi=200)
-            fig.patch.set_facecolor('#0E1117')
-            ax.set_facecolor('#0E1117')
-
-            # 节点：增大尺寸，使用更明亮的边框
-            nx.draw_networkx_nodes(G, pos, ax=ax,
-                node_color='#00D4FF', node_size=1000, alpha=0.95, edgecolors='#FFFFFF', linewidths=2)
-            
-            # 边：增加宽度和箭头大小
-            nx.draw_networkx_edges(G, pos, ax=ax,
-                edge_color='#FF6B6B', arrows=True, arrowsize=20,
-                width=2, alpha=0.8, connectionstyle="arc3,rad=0.1")
-            
-            # 节点标签：增大字体，增加描边背景
-            nx.draw_networkx_labels(G, pos, ax=ax,
-                font_size=9, font_color='white', font_weight='bold',
-                bbox=dict(facecolor='#0E1117', alpha=0.6, edgecolor='none', pad=1))
-            
-            # 边标签：增大字体
-            edge_labels = nx.get_edge_attributes(G, 'label')
-            nx.draw_networkx_edge_labels(G, pos, edge_labels, ax=ax,
-                font_size=7, font_color='#FFD93D', alpha=1.0, rotate=False,
-                bbox=dict(facecolor='#0E1117', alpha=0.8, edgecolor='none'))
-
-            ax.set_title(f"Ontology Knowledge Graph ({G.number_of_nodes()} nodes)",
-                         color='white', fontsize=12, pad=15)
-            ax.axis('off')
-            plt.tight_layout()
-            st.pyplot(fig)
-            plt.close(fig)
-        except ImportError:
-            st.info("请安装 `networkx` 和 `matplotlib` 以启用图谱可视化。")
-    else:
-        st.caption("暂无知识，请向 Agent 灌输领域事实。")
-    
-    # 事实明细表
     if fact_count > 0:
-        st.markdown("---")
-        st.subheader("📋 事实明细")
-        fact_data = []
-        for f in reasoner.facts:
-            fact_data.append({"主体": f.subject, "谓词": f.predicate, "客体": f.object, "置信": f"{f.confidence:.0%}"})
-        st.dataframe(fact_data, use_container_width=True, hide_index=True)
+        import streamlit.components.v1 as components
+        html = render_graph_html()
+        components.html(html, height=450)
+        
+        # [Gemini Optimization] 最大化图谱
+        @st.dialog("🌍 本地动力学图谱全景", width="large")
+        def show_large_graph():
+            full_html = render_graph_html(height="800px")
+            components.html(full_html, height=850)
+        
+        if st.button("🔍 最大化查看图谱", use_container_width=True):
+            show_large_graph()
+    else:
+        st.info("等待知识灌输...")
 
     st.markdown("---")
-    st.caption("Module 4: Visual Reasoning Trace Dashboard")
+    if st.button("🗑️ 清空对话 (Clear)", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
 
 # =========================================
-# 右侧主界面：对话窗口
+# 常规渲染函数
 # =========================================
-st.title("💡 Clawra 终端交互面 (Sandbox)")
-
-def render_structured_trace(trace_data):
-    """渲染结构化推理轨迹"""
-    if isinstance(trace_data, str):
-        # 兼容旧格式（如果是字符串，直接显示）
-        st.code(trace_data, language="text")
-        return
+def render_trace_node(node):
+    """渲染单个推理节点"""
+    tool = node.get("tool", "Unknown")
+    args = node.get("args", {})
+    result = node.get("result", {})
     
-    # 归一化数据格式：兼容 List (orchestrator 原生) 和 Dict (UI 包装)
-    nodes = []
-    if isinstance(trace_data, list):
-        nodes = trace_data
-    elif isinstance(trace_data, dict):
-        nodes = trace_data.get("trace_nodes") or trace_data.get("trace") or []
-    
-    for t in nodes:
-        tool_name = t.get("tool", "")
-        result = t.get("result", {})
+    with st.container():
+        st.markdown(f"#### 🔌 {tool} | {node.get('latency', '')}")
         
-        st.markdown(f"**🔌 工具调用:** `{tool_name}`")
+        # Ingest 结果
+        if tool == "ingest_knowledge":
+            if "accepted_triples" in result:
+                st.write(f"✅ **新发现公理 ({len(result['accepted_triples'])}):**")
+                triples = [t["triple"] for t in result["accepted_triples"]]
+                st.code("\n".join(triples), language="text")
+            if "rejected_triples" in result:
+                st.write("❌ **被拒绝冲突项:**")
+                for r in result["rejected_triples"]:
+                    st.caption(f"{r['triple']} — {r['reason']}")
         
-        if isinstance(result, str):
-            st.code(result, language="text")
-            continue
-
-        if isinstance(result, dict):
-            # 摘要
-            if "summary" in result:
-                st.info(f"📋 {result['summary']}")
+        # Query 结果
+        elif tool == "query_graph":
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                if "reasoning_chain" in result and result["reasoning_chain"]:
+                    st.write("**🧠 逻辑推导链 (Forward Chaining):**")
+                    for step in result["reasoning_chain"]:
+                        st.caption(f"- IF `{step['premise']}` THEN `{step['conclusion']}` (Conf: {step['confidence']:.2f})")
+                
+                if "metacognition" in result:
+                    meta = result["metacognition"]
+                    st.write("**💡 元认知反思:**")
+                    st.info(meta.get("result", "Thinking..."))
             
-            # 已接受的三元组
-            if "accepted_triples" in result and result["accepted_triples"]:
-                st.markdown("**✅ 经哨兵验证通过的公理:**")
-                triple_data = []
-                for ref in result["accepted_triples"]:
-                    triple_data.append({
-                        "三元组": ref.get("triple", ""),
-                        "置信度": f"{ref.get('confidence', 0):.2%}",
-                        "来源": ref.get("source", "")
-                    })
-                st.dataframe(triple_data, use_container_width=True, hide_index=True)
-            
-            # 被拒绝的三元组
-            if "rejected_triples" in result and result["rejected_triples"]:
-                st.markdown("**❌ 被哨兵拒绝的公理:**")
-                for ref in result["rejected_triples"]:
-                    st.warning(f"{ref.get('triple', '')} — {ref.get('reason', '')}")
-            
-            # 向量检索上下文
-            if "vector_context" in result and result["vector_context"]:
-                st.markdown("**🔍 向量检索上下文 (ChromaDB):**")
-                for i, ctx in enumerate(result["vector_context"], 1):
-                    st.caption(f"  {i}. {ctx}")
-            
-            # 推理链
-            if "reasoning_chain" in result and result["reasoning_chain"]:
-                st.markdown("**🧠 前向链推理步骤:**")
-                for i, step in enumerate(result["reasoning_chain"], 1):
-                    rule_info = step.get("rule", {})
-                    st.markdown(
-                        f"  **Step {i}:** 规则 `{rule_info.get('name', '')}` (`{rule_info.get('id', '')}`)\n"
-                        f"  - 前提: `{step.get('premise', '')}`\n"
-                        f"  - 结论: `{step.get('conclusion', '')}`\n"
-                        f"  - 置信度: **{step.get('confidence', 0):.2%}**"
-                    )
-            
-            # 使用的事实
-            if "facts_used" in result and result["facts_used"]:
-                st.markdown("**📚 推理依据事实:**")
-                for ref in result["facts_used"]:
-                    st.caption(f"  • {ref}")
-            
-            # 整体置信度
-            if "total_confidence" in result:
-                conf = result["total_confidence"]
-                st.metric("推理链整体置信度", f"{conf:.2%}")
-            
-            # 元认知详情 (Metacognition)
-            if "metacognition" in result:
-                meta = result["metacognition"]
-                st.markdown(f"**💡 元认知结论:** {meta.get('result', '')}")
-                if "inference_steps" in meta and meta["inference_steps"]:
-                    with st.expander("🔍 详细推理链条 (Metacognitive Steps)", expanded=True):
-                        for i, s in enumerate(meta["inference_steps"], 1):
-                            st.markdown(
-                                f"  **Step {i}:** {s.get('rule', '逻辑推导')}\n"
-                                f"  - 前提: `{s.get('premise', '')}`\n"
-                                f"  - 结论: `{s.get('conclusion', '')}`\n"
-                                f"  - 置信度: **{s.get('confidence', 0):.2%}**"
-                            )
-            elif "agent_conclusion" in result:
-                st.markdown(f"**💡 元认知结论:** {result['agent_conclusion']}")
-
-            # Action 执行详情
-            if "action_details" in result:
-                st.markdown(f"**⚡ 行动详情:** {result['action_details']}")
-            if "parameters" in result:
-                st.json(result["parameters"])
-        else:
-            st.code(str(result), language="text")
+            with col2:
+                if "grain_check" in result:
+                    grain = result["grain_check"]
+                    st.write("**🛡️ 粒度审计:**")
+                    if grain["status"] == "SAFE":
+                        st.success("Grain Verified")
+                    else:
+                        st.error(f"Grain Risk: {grain['risk_level']}")
+                        st.caption(grain["message"])
         
-        st.markdown("---")
+        # Action 结果
+        elif tool == "execute_action":
+            st.write(f"⚡ **Kinetic Action:** `{result.get('summary', 'Executing')}`")
+            if "execution_impact" in result:
+                st.success(result["execution_impact"])
 
+# =========================================
+# 主界面对话逻辑
+# =========================================
+st.title("💡 Clawra Cognitive Console")
 
+# 聊天记录显示
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if "trace" in msg:
-            with st.expander("🧐 查看认知引擎推理轨迹 (Reasoning Trace)"):
-                render_structured_trace(msg["trace"])
+            with st.expander("🧐 深度认知轨迹 (High-Fidelity Reasoning Trace)"):
+                for node in msg["trace"]:
+                    render_trace_node(node)
 
-# 用户输入交互
-if prompt := st.chat_input("输入查询意图或业务语料..."):
+# 输入框
+if prompt := st.chat_input("灌输知识或发起逻辑查询..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Clawra 混合引擎思考中 (ReAct Agent Loop)..."):
-            import asyncio
-            start_time = time.time()
-            response_data = asyncio.run(st.session_state.orchestrator.execute_task(st.session_state.messages))
-            latency = time.time() - start_time
-            
-            intent = response_data.get("intent", "UNKNOWN")
-            reply = response_data.get("message", "")
-            
-            if intent == "INGEST":
-                facts = response_data.get("facts", [])
-                if facts:
-                    reply += f"\n\n**抽取出的结构化三元组:**\n"
-                    for item in facts:
-                        reply += f"- `({item[0]} -> {item[1]} -> {item[2]})`\n"
-
-            # 构建结构化 trace 数据
-            trace_logs = response_data.get("trace", [])
-            structured_trace = {
-                "intent": intent,
-                "latency": f"{latency:.2f}s",
-                "trace_nodes": trace_logs
-            }
-
-            st.markdown(reply)
-            with st.expander("🧐 查看认知引擎推理轨迹 (Reasoning Trace)"):
-                st.markdown(f"**意图路由:** `{intent}` | **延迟:** `{latency:.2f}s`")
-                st.markdown("---")
-                render_structured_trace(structured_trace)
-                
-            st.session_state.messages.append({"role": "assistant", "content": reply, "trace": structured_trace})
-            
-            # 触发侧边栏图谱刷新
-            st.rerun()
+        # 实时思考动画
+        status = st.status("🚀 Clawra 正在激发神经突触...", expanded=True)
+        
+        start_time = time.time()
+        # 执行 Orchestrator 任务
+        response_data = asyncio.run(st.session_state.orchestrator.execute_task(st.session_state.messages))
+        latency = time.time() - start_time
+        
+        # 更新状态节点
+        trace_logs = response_data.get("trace", [])
+        for node in trace_logs:
+            status.update(label=f"✅ 已完成 {node.get('tool')} 调用", state="running")
+            time.sleep(0.1)
+        
+        status.update(label=f"✨ 推理完成 (耗时 {latency:.2f}s)", state="complete", expanded=False)
+        
+        reply = response_data.get("message", "")
+        st.markdown(reply)
+        
+        # 记录和保存
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": reply, 
+            "trace": trace_logs
+        })
+        
+        # 重新运行刷新 UI
+        st.rerun()

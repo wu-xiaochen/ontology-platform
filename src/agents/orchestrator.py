@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import time
+import re
 from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ from agents.auditor import AuditorAgent
 from core.memory.skills import SkillRegistry
 from perception.glossary_engine import GlossaryEngine
 from core.ontology.actions import ActionRegistry, ActionType
+from core.ontology.grain_validator import GrainValidator
 
 class CognitiveOrchestrator:
     """
@@ -25,7 +27,7 @@ class CognitiveOrchestrator:
     - query_graph -> Vector Search -> MetacognitiveAgent -> Core Reasoner -> Response
     """
     
-    def __init__(self, reasoner: Reasoner, semantic_mem: SemanticMemory, episodic_mem: EpisodicMemory):
+    def __init__(self, reasoner: Reasoner, semantic_mem: SemanticMemory, episodic_mem: EpisodicMemory, project_context: Optional[str] = None):
         self.reasoner = reasoner
         self.semantic_memory = semantic_mem
         self.episodic_memory = episodic_mem
@@ -40,8 +42,8 @@ class CognitiveOrchestrator:
         self.action_registry = ActionRegistry()
         self._wire_action_logics()
 
-        # 全局项目上下文加载（类似 claude.md）
-        self.project_context = self._load_project_context()
+        # 全局项目上下文加载
+        self.project_context = project_context or self._load_project_context()
 
     def _load_project_context(self) -> str:
         cwd = os.getcwd()
@@ -130,7 +132,7 @@ class CognitiveOrchestrator:
             "triple": f"({phys} -> maps_to -> {biz})"
         }
 
-    async def execute_task(self, messages: List[Dict[str, str]]) -> Dict[str, Any]:
+    async def execute_task(self, messages: List[Dict[str, str]], custom_prompt: Optional[str] = None) -> Dict[str, Any]:
         """执行基于 Tool-Calling 的无极状态机大循环"""
         from openai import OpenAI
         api_key = os.getenv("OPENAI_API_KEY")
@@ -147,14 +149,16 @@ class CognitiveOrchestrator:
             {
                 "role": "system", 
                 "content": (
-                    f"[Clawra Cognitive Kernel - Intelligence Directive]\n"
-                    f"{self.project_context}\n\n"
-                    "CORE MISSION: You are not a chatbot; you are a High-Fidelity Logic Engine. \n"
-                    "1. FACTUAL GROUNDING: Every claim must lead back to a verified triple from the Graph. \n"
-                    "2. QUALITY FOCUS: When discussing procurement or gas regulators, meticulously analyze 'Quality Points' (质量点) and 'Safety Requirements'. \n"
-                    "3. KINETIC REASONING: Don't just list facts. Connect them. If 'ExdIIBT4' is required, explain why the environment demands it based on the ontology. \n"
-                    "4. TOOL USAGE: Use 'ingest_knowledge' for new facts. Use 'query_graph' for ANY logic investigation. \n"
-                    "5. AVOID PRAISE: Minimize polite fillers. Be cold, logical, and technically precise."
+                    custom_prompt or (
+                        f"[Clawra Cognitive Kernel - Intelligence Directive]\n"
+                        f"{self.project_context}\n\n"
+                        "CORE MISSION: You are not a chatbot; you are a High-Fidelity Logic Engine. \n"
+                        "1. FACTUAL GROUNDING: Every claim must lead back to a verified triple from the Graph. \n"
+                        "2. QUALITY FOCUS: When discussing procurement or gas regulators, meticulously analyze 'Quality Points' (质量点) and 'Safety Requirements'. \n"
+                        "3. KINETIC REASONING: Don't just list facts. Connect them. If 'ExdIIBT4' is required, explain why the environment demands it based on the ontology. \n"
+                        "4. TOOL USAGE: Use 'ingest_knowledge' for new facts. Use 'query_graph' for ANY logic investigation. YOU MUST USE TOOLS FOR REASONING. \n"
+                        "5. AVOID PRAISE: Minimize polite fillers. Be cold, logical, and technically precise."
+                    )
                 )
             }
         ]
@@ -325,8 +329,14 @@ class CognitiveOrchestrator:
                             for f in inference_result.facts_used
                         ]
                         
-                        # 注入极深关联背景供 Agent 决策
-                        rich_task = f"[Context-Enriched Query]\n[Graph Context]: {full_context}\n[Target]: {query}"
+                        # [Gemini Optimization] 粒度理论 (Grain Theory) 静态校验
+                        grain_validator = GrainValidator(self.semantic_memory)
+                        # 启发式检测聚合意图
+                        agg_func = "SUM" if any(k in query for k in ["总和", "共", "累计", "SUM", "TOTAL"]) else None
+                        grain_result = grain_validator.validate_query_logic(entities[:2], aggregate_func=agg_func)
+                        
+                        # 4. 注入极深关联背景供 Agent 决策
+                        rich_task = f"[Context-Enriched Query]\n[Graph Context]: {full_context}\n[Target]: {query}\n[Logic Constraints]: {grain_result.get('message', 'Checked')}"
                         agent_response = await self.reasoning_agent.run(rich_task)
                         
                         trace_node["result"] = {
@@ -334,10 +344,15 @@ class CognitiveOrchestrator:
                             "vector_context": context_docs,
                             "reasoning_chain": reasoning_chain,
                             "facts_used": facts_used_refs,
+                            "grain_check": grain_result,
                             "total_confidence": round(inference_result.total_confidence.value, 4),
                             "metacognition": agent_response # 直接传递结构化字典
                         }
-                        tool_result_str = json.dumps({"status": "SUCCESS", "logic_engine_conclusion": agent_response.get("result", "")}, ensure_ascii=False)
+                        tool_result_str = json.dumps({
+                            "status": "SUCCESS", 
+                            "logic_engine_conclusion": agent_response.get("result", ""),
+                            "grain_status": grain_result.get("status", "SAFE")
+                        }, ensure_ascii=False)
 
                     elif func_name == "execute_action":
                         response_data["intent"] = "ACTION"
