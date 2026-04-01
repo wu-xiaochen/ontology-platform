@@ -33,19 +33,42 @@ class KnowledgeExtractionResult(BaseModel):
 
 
 # ========================================
-# 抽取 Prompt（精确指导模型输出）
+# 本体引导定义（Domain Ontology Schema）
 # ========================================
 
-EXTRACTION_SYSTEM_PROMPT = """你是一个精确的本体知识抽取引擎。你的任务是从文本中提取结构化的知识三元组(Subject, Predicate, Object)。
+CORE_DOMAIN_ONTOLOGY = """
+[核心领域本体定义]
+1. 核心类 (Classes):
+   - 产品/设备: 燃气调压箱, 楼栋调压箱, 落地调压柜, 调压站设备
+   - 核心部件: 调压器 (核心), 切断阀, 放散阀, 过滤器, 压力表, 流量计
+   - 技术参数: 进口压力(P1), 出口压力(P2), 额定流量(Q), 稳压精度(AC), 关闭压力(SG)
+   - 质量指标/检验: 气密性测试, 强度测试, 无损检测, 漆膜厚度, 响应时间
+   - 业务场景: 居民小区, 工商业(餐饮/综合体), 工业园区, 老旧管网改造
+   - 标准规范: GB 27791, GB 50028, GB 27790
+   - 供应商/品牌: 费希尔, 特瑞斯, 春晖, 永良
+
+2. 核心谓词 (Predicates):
+   - 包含组件 (has_component)
+   - 具备参数/规格 (has_parameter)
+   - 适用场景 (applicable_to)
+   - 符合/依据标准 (complies_with)
+   - 属于分类 (subClassOf)
+   - 质量要求/红线 (quality_requirement)
+   - 工艺特性 (technical_feature)
+"""
+
+EXTRACTION_SYSTEM_PROMPT = f"""你是一个高精度的工业级本体知识抽取引擎。你的任务是从燃气设备相关的技术文档中提取结构化的知识三元组(Subject, Predicate, Object)。
+
+{CORE_DOMAIN_ONTOLOGY}
 
 输出规则：
-1. 只输出一个合法的 JSON 对象，格式如下：
-{"facts": [{"subject": "...", "predicate": "...", "object": "...", "confidence": 0.9}]}
-2. subject 和 object 应该是明确的实体名词（如"燃气调压箱"、"ISO9001"）
-3. predicate 应使用清晰的关系描述（如"包含组件"、"适用场景"、"进口压力范围"）
-4. 不要解释，不要加markdown格式，只输出纯JSON
-5. 每次最多提取 15 条最重要的三元组
-6. confidence 表示你对该条事实的确信度（0.0-1.0）"""
+1. 必须使用上述[核心领域本体定义]中的类名和谓词进行对齐。不要创造重复的同义词。
+2. 提取密度：请尽可能全面提取所有技术细节，包括具体的数值范围（如 0.4-4.0 MPa）、标准号（如 GB 27791）和业务红线。
+3. 如果文档提到"严禁"、"红线"或"故障原因"，请务必将其提取为 (Subject, quality_requirement, "...")。
+4. 只输出一个合法的 JSON 对象，格式如下：
+{{"facts": [{{"subject": "...", "predicate": "...", "object": "...", "confidence": 0.9}}]}}
+5. 每次最多提取 30 条三元组以保证知识不遗漏。
+6. 不要解释，不要加markdown格式，只输出纯JSON。"""
 
 EXTRACTION_USER_PROMPT = """请从以下文本中提取知识三元组。只输出JSON，不要解释。
 
@@ -73,7 +96,7 @@ class KnowledgeExtractor:
     # 单块最大字符数（超过此值将触发分块）
     CHUNK_THRESHOLD = 1500
     # 每个LLM调用最大返回三元组数
-    MAX_TRIPLES_PER_CALL = 15
+    MAX_TRIPLES_PER_CALL = 30
     
     def __init__(self, use_mock_llm: bool = True):
         self.use_mock_llm = use_mock_llm

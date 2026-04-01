@@ -18,6 +18,23 @@ class SemanticMemory:
         self.client = Neo4jClient(uri=uri, user=user, password=password)
         self.vector_store = ChromaVectorStore()
         self.is_connected = False
+        # 实体归一化映射表（同义词对齐）
+        self.entity_synonyms = {
+            "燃气调压柜": "燃气调压箱",
+            "调压柜": "燃气调压箱",
+            "落地调压柜": "燃气调压箱",
+            "楼栋调压箱": "燃气调压箱",
+            "调压站设备": "燃气调压箱",
+            "区域调压柜": "燃气调压箱",
+            "气密性测试": "气密性试验",
+            "气密性": "气密性试验",
+            "密闭性": "气密性试验",
+            "进口压力(P1)": "进口压力",
+            "出口压力(P2)": "出口压力",
+            "额定流量(Q)": "额定流量",
+            "稳压精度(AC)": "稳压精度",
+            "关闭压力(SG)": "关闭压力"
+        }
         
     def connect(self):
         """建立图数据库连接"""
@@ -27,18 +44,36 @@ class SemanticMemory:
         else:
             logger.warning("Semantic Memory failed to connect to Neo4j. Operating in memory mode.")
 
+    def normalize_entity(self, name: str) -> str:
+        """实体归一化：将同义词映射到标准本体术语"""
+        if not name:
+            return name
+        name_stripped = name.strip()
+        # 1. 精确匹配映射表
+        if name_stripped in self.entity_synonyms:
+            return self.entity_synonyms[name_stripped]
+        # 2. 包含关系判断（如 "GB 27791标准" -> "GB 27791"）
+        for key in self.entity_synonyms:
+            if key in name_stripped:
+                return self.entity_synonyms[key]
+        return name_stripped
+
     def store_fact(self, fact: Fact):
-        """将推理事实同步存入图数据库与向量数据库"""
-        self.client.create_entity(fact.subject, "Entity")
-        self.client.create_entity(fact.object, "Entity")
+        """将推理事实同步存入图数据库与向量数据库（含归一化控制）"""
+        # 执行实体归一化，防止图谱断裂
+        norm_subject = self.normalize_entity(fact.subject)
+        norm_object = self.normalize_entity(fact.object)
+        
+        self.client.create_entity(norm_subject, "Entity")
+        self.client.create_entity(norm_object, "Entity")
         self.client.create_relationship(
-            fact.subject, fact.object, fact.predicate, 
+            norm_subject, norm_object, fact.predicate, 
             confidence=fact.confidence
         )
-        # 同步写入向量索引
+        # 同步写入向量索引，保留原始语境以支持语义检索
         vector_doc = Document(
-            content=f"{fact.subject} {fact.predicate} {fact.object}",
-            metadata={"source": fact.source, "confidence": fact.confidence}
+            content=f"{norm_subject} {fact.predicate} {norm_object}",
+            metadata={"source": fact.source, "confidence": fact.confidence, "orig_s": fact.subject, "orig_o": fact.object}
         )
         self.vector_store.add_documents([vector_doc])
 

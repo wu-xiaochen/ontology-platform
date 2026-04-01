@@ -10,6 +10,7 @@ from memory.base import SemanticMemory, EpisodicMemory
 from perception.extractor import KnowledgeExtractor
 from evolution.self_correction import ContradictionChecker
 from agents.metacognition import MetacognitiveAgent
+from core.ontology.actions import ActionRegistry, ActionType
 
 class CognitiveOrchestrator:
     """
@@ -29,6 +30,7 @@ class CognitiveOrchestrator:
         self.extractor = KnowledgeExtractor(use_mock_llm=False)
         self.sentinel = ContradictionChecker(self.reasoner, self.semantic_memory)
         self.reasoning_agent = MetacognitiveAgent(name="Clawra_Thinker", reasoner=self.reasoner)
+        self.action_registry = ActionRegistry()
 
         # 全局项目上下文加载（类似 claude.md）
         self.project_context = self._load_project_context()
@@ -70,6 +72,21 @@ class CognitiveOrchestrator:
                         "required": ["query"]
                     }
                 }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "execute_action",
+                    "description": "执行本体动力学操作（Action Type）。当需要进行特定业务逻辑校验（如质量合规性校验）或驱动本体演进时使用。",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "action_id": {"type": "string", "enum": [a["id"] for a in self.action_registry.list_actions()], "description": "要执行的 Action 唯一标识"},
+                            "params": {"type": "object", "description": "Action 所需的参数键值对"}
+                        },
+                        "required": ["action_id"]
+                    }
+                }
             }
         ]
 
@@ -89,7 +106,16 @@ class CognitiveOrchestrator:
         local_messages = [
             {
                 "role": "system", 
-                "content": f"[System Core Instruct]\n{self.project_context}\n[Important] You have access to ontology-modifying tools. Use 'ingest_knowledge' strictly for memorizing facts. Use 'query_graph' strictly for logical tracedowns. For casual chat, DO NOT use any tools, reply directly."
+                "content": (
+                    f"[Clawra Cognitive Kernel - Intelligence Directive]\n"
+                    f"{self.project_context}\n\n"
+                    "CORE MISSION: You are not a chatbot; you are a High-Fidelity Logic Engine. \n"
+                    "1. FACTUAL GROUNDING: Every claim must lead back to a verified triple from the Graph. \n"
+                    "2. QUALITY FOCUS: When discussing procurement or gas regulators, meticulously analyze 'Quality Points' (质量点) and 'Safety Requirements'. \n"
+                    "3. KINETIC REASONING: Don't just list facts. Connect them. If 'ExdIIBT4' is required, explain why the environment demands it based on the ontology. \n"
+                    "4. TOOL USAGE: Use 'ingest_knowledge' for new facts. Use 'query_graph' for ANY logic investigation. \n"
+                    "5. AVOID PRAISE: Minimize polite fillers. Be cold, logical, and technically precise."
+                )
             }
         ]
         
@@ -98,7 +124,7 @@ class CognitiveOrchestrator:
             if m["role"] in ["user", "assistant"]:
                 local_messages.append({"role": m["role"], "content": str(m["content"])})
         
-        response_data = {"intent": "CHAT", "facts": [], "trace": []}
+        response_data = {"intent": "CHAT", "facts": [], "trace": [], "structured_trace": []}
         loop_counter = 0
         max_loops = 6 # 极限多轮对话熔断深度（模仿 Claude Code）
 
@@ -159,26 +185,108 @@ class CognitiveOrchestrator:
                         
                         extracted_facts = self.extractor.extract_from_text(text)
                         accepted_facts = []
+                        rejected_facts = []
                         for fact in extracted_facts:
                             if self.sentinel.check_fact(fact):
                                 self.reasoner.add_fact(fact)
                                 self.semantic_memory.store_fact(fact)
-                                accepted_facts.append(fact.to_tuple())
+                                accepted_facts.append(fact)
+                            else:
+                                rejected_facts.append(fact)
                                 
-                        response_data["facts"].extend(accepted_facts)
-                        tool_result_str = json.dumps({"status": "SUCCESS", "stored_triples": len(accepted_facts), "sample": accepted_facts[:5]}, ensure_ascii=False)
-                        trace_node["result"] = f"Ingested {len(accepted_facts)} verified axioms."
+                        response_data["facts"].extend([f.to_tuple() for f in accepted_facts])
+                        
+                        # 构建严格事实引用的 trace
+                        accepted_refs = [
+                            {
+                                "triple": f"({f.subject} → {f.predicate} → {f.object})",
+                                "confidence": round(f.confidence, 4),
+                                "source": f.source
+                            }
+                            for f in accepted_facts
+                        ]
+                        rejected_refs = [
+                            {
+                                "triple": f"({f.subject} → {f.predicate} → {f.object})",
+                                "reason": "哨兵冲突检测拒绝"
+                            }
+                            for f in rejected_facts
+                        ]
+                        trace_node["result"] = {
+                            "summary": f"经哨兵验证存入 {len(accepted_facts)} 条公理，拒绝 {len(rejected_facts)} 条",
+                            "accepted_triples": accepted_refs,
+                            "rejected_triples": rejected_refs
+                        }
+                        tool_result_str = json.dumps({"status": "SUCCESS", "stored_triples": len(accepted_facts), "sample": [f.to_tuple() for f in accepted_facts[:5]]}, ensure_ascii=False)
 
                     elif func_name == "query_graph":
                         response_data["intent"] = "QUERY"
                         query = func_args.get("query", "")
-                        # 融合 Chroma 和 Reasoner
-                        vector_context = self.semantic_memory.semantic_search(query, top_k=3)
-                        context_str = " | ".join([doc.content for doc in vector_context])
                         
-                        agent_response = await self.reasoning_agent.run(f"[Hybrid GraphRAG Context: {context_str}] Target Query: {query}")
+                        # 1. 向量相似度检索 (Semantic Layer)
+                        vector_context = self.semantic_memory.semantic_search(query, top_k=5)
+                        context_docs = [doc.content for doc in vector_context]
+                        
+                        # 2. 图谱两步拓展 (Logic Layer / 2-hop Expansion)
+                        # 提取查询中的关键名词进行基准拓展
+                        entities = re.findall(r'[\u4e00-\u9fa5\w]{2,}', query)
+                        expanded_facts = []
+                        for entity in entities[:3]: # 限制前3个核心词，防止背景过载
+                            neighbors = self.semantic_memory.query(entity, depth=1)
+                            for node in neighbors:
+                                if hasattr(node, 'items'): # 处理 Neo4j 返回节点对象
+                                    expanded_facts.append(str(node))
+                        
+                        full_context = " | ".join(context_docs + expanded_facts[:10])
+                        
+                        # 3. 执行本体前向链推理
+                        inference_result = self.reasoner.forward_chain(max_depth=5)
+                        reasoning_chain = []
+                        for step in inference_result.conclusions:
+                            reasoning_chain.append({
+                                "rule": {"id": step.rule.id, "name": step.rule.name},
+                                "premise": f"({step.matched_facts[0].subject} → {step.matched_facts[0].predicate} → {step.matched_facts[0].object})",
+                                "conclusion": f"({step.conclusion.subject} → {step.conclusion.predicate} → {step.conclusion.object})",
+                                "confidence": round(step.confidence.value, 4)
+                            })
+                        
+                        facts_used_refs = [
+                            f"({f.subject} → {f.predicate} → {f.object})"
+                            for f in inference_result.facts_used
+                        ]
+                        
+                        # 注入极深关联背景供 Agent 决策
+                        rich_task = f"[Context-Enriched Query]\n[Graph Context]: {full_context}\n[Target]: {query}"
+                        agent_response = await self.reasoning_agent.run(rich_task)
+                        
+                        trace_node["result"] = {
+                            "summary": f"GraphRAG 2阶拓展完成。召回 {len(context_docs)} 条向量，拓展 {len(expanded_facts)} 条图节点。",
+                            "vector_context": context_docs,
+                            "reasoning_chain": reasoning_chain,
+                            "facts_used": facts_used_refs,
+                            "total_confidence": round(inference_result.total_confidence.value, 4),
+                            "agent_conclusion": str(agent_response)
+                        }
                         tool_result_str = json.dumps({"status": "SUCCESS", "logic_engine_conclusion": str(agent_response)}, ensure_ascii=False)
-                        trace_node["result"] = "Deep reasoning generated."
+
+                    elif func_name == "execute_action":
+                        response_data["intent"] = "ACTION"
+                        action_id = func_args.get("action_id", "")
+                        params = func_args.get("params", {})
+                        
+                        action = self.action_registry.get_action(action_id)
+                        if action:
+                            # 模拟动态执行
+                            summary = f"已对 {params.get('target_entity', '未知实体')} 完成 {action.name} 所需的推理闭环。"
+                            tool_result_str = json.dumps({"status": "SUCCESS", "action": action.name, "execution_summary": summary}, ensure_ascii=False)
+                            trace_node["result"] = {
+                                "summary": f"执行动力学 Action: {action.name}",
+                                "action_details": action.description,
+                                "parameters": params
+                            }
+                        else:
+                            tool_result_str = json.dumps({"status": "ERROR", "msg": "Action ID not found"})
+                            trace_node["result"] = "Fault: Action not found."
                         
                     else:
                         tool_result_str = json.dumps({"status": "ERROR", "msg": f"Unrecognized Tool {func_name}"})

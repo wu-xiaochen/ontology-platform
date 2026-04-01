@@ -1,0 +1,386 @@
+2026-04-01 11:17:50.985 Did not auto detect external IP.
+Please go to https://docs.streamlit.io/ for debugging hints.
+
+  You can now view your Streamlit app in your browser.
+
+  Local URL: http://localhost:8501
+  Network URL: http://198.18.0.1:8501
+
+INFO:core.permissions:Initialized PermissionManager with 5 default roles
+INFO:numexpr.utils:NumExpr defaulting to 10 threads.
+INFO:core.reasoner:添加规则: 传递性规则 (builtin:transitivity)
+INFO:core.reasoner:添加规则: 对称性规则 (builtin:symmetry)
+INFO:chromadb.telemetry.product.posthog:Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+INFO:memory.neo4j_adapter:Connected to Neo4j: bolt://localhost:7687
+INFO:memory.base:Semantic Memory connected to Neo4j.
+2026-04-01 11:19:25.493 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 11:20:21.076 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:agents.orchestrator:🔨 Agent triggered tool: [ingest_knowledge] with {'text': '知识库-燃气调压箱\n品类名称： 燃气调压箱\n类目编码：19696\n所属类目： 石油开采、精炼工业用设备> 石油化工设备 > 调压设备 > 燃气调压箱\n更新日期： 2026年1月28日\n\n一、 基础定义与术语\n1.1 品类定义\n●燃气调压箱： 是一种将燃气调压器、紧急切断阀、放散阀、过滤器、压力仪表、流量计（可选）及控制系统（可选）等部件集成在金属箱体内的成套设备。\n●功能： 主要用于将上游管网的高压/中压燃气降至下游用户所需的中压/低压标准，并实现出口压力的自动稳定控制、超压切断保护、杂质过滤及流量计量（可选）等功能。\n●形态区分：\n○楼栋调压箱： 通常体积相对较小，壁挂于建筑外墙或设置于专用钢架平台上，主要为单栋或相邻楼宇供气。\n○落地调压柜： 通常体积较大，落地安装在地面混凝土基础上，服务范围较广，如小区、工商业区域或大型工业用户。\n1.2 核心术语表\n术语\t定义/说明\t来源标准\n进口压力 (P1)\t设备允许接入的上游管网压力范围（如 0.4-4.0 MPa）。\tGB 27791\n出口压力 (P2)\t经设备调节后输出的压力范围（如居民用气 2.5-3.0 kPa）。\tGB 27791\n额定流量 (Q)\t基准状态下，调压箱每路出口在最低进口压力、声明设定出口压力情况下通过的最大气体流量（Nm3/h）\tGB 27791\n稳压精度 (AC)\t出口压力实际值与设定值的偏差范围，通常要求 ≤±10% 或 ±15%（视等级而定）。\tGB 27790\n关闭压力 (SG)\t流量为零时，调压器关闭后的出口密封压力（通常为设定压力的 1.1-1.25 倍）。\tGB 27790\n切断压力\t当出口压力异常升高达到设定值（如10KPa＜出口压力P2≤80KPa时，切断压力是1.5 倍 P2）时，切断阀自动关闭的压力值。\tGB 27791\n放散压力\t当出口压力超过允许值（如如10KPa＜出口压力P2≤80KPa时，放散压力是1.25 倍 P2）时，放散阀开启释放气体的压力值。\tGB 27791\n结构形式\t指调压通路的数量与配置，如 1+0（一路调压）、1+1（一开一备）、2+0（双路运行）。\tGB 27791\n1.3 同义词与关联词\n●同义词： 燃气调压柜、调压站设备、楼栋调压箱、区域调压撬。\n●相关物资： 燃气调压器（核心部件）、流量计（腰轮/涡轮/超声波）、球阀（进出口控制）、压力表/压力变送器。\n\n二、 核心属性与规格\n2.1 关键参数属性\n属性维度\t关键参数/枚举值\t业务含义与采购策略\t关联供应商能力要求\n额定流量\t50, 100, 150，200, 300，500,700，800, 1000,1200,1500，2000,2500，3000,5000m³/h\t含义： 决定设备的供气能力。 \n策略： 额定流量应不低于实际最大小时流量的 1.2 倍；居民用调压箱多为 50-200m³/h，工业多为 500m³/h 以上。\t检测能力：需具备相应流量范围的测试装置，确保性能调试准确。\n进出口管径\tDN25 - DN300 (常见 DN50, DN80, DN100)\t含义： 接口规格，需与现场管道匹配。\n 策略： 老旧改造项目需实地测量原有管道尺寸，新建管网优先选标准法兰连接。\t加工能力：  具备精确的管道切割、坡口加工与焊接能力。\n调压结构\t1+0 (单路), 1+1 (一开一旁通), 2+0 (双路), 2+1(一开一备一旁通）\t含义： 决定供气可靠性。 \n策略： 居民/工业关键用户必选 1+1 或2+0或更高冗余配置，确保检修不停气；普通商业可由 1+0或1+1满足。\t集成能力： 模块化设计能力，布局合理，便于维护。\n进口压力级制\t0.01-0.2MPa (中压B), 0.4-0.8MPa (次高压B), 1.6-4.0MPa (高压),压力等级划分参照GB50028\t含义： 必须对应上游燃气管网的实际压力等级\n红线： 严禁低压设备接入高压管网。\t资质要求：生产涉及压力管道元件的，必须持有相应级别产品的《特种设备生产许可证》。\n材质配置\t箱体：碳钢喷塑/不锈钢\t含义： 决定耐用性。 \n策略： 选 304不锈钢 或 镀锌板+喷塑（耐盐雾≥1000h）。\t表面处理： 具备自动化的表面处理生产线（如喷塑），并能提供相关耐腐蚀测试报告。\n计量方式\t无计量, 腰轮, 涡轮, 超声波\t含义： 贸易结算或内部考核。\n策略： 小流量选腰轮，大流量稳态选涡轮，宽量程/复杂工况选超声波。\t校准能力： 若包含计量，流量计需经法定计量机构检定。\n2.2 规格型号编制规则（通用示例）\n●规则结构： [产品系列代号] - [最大进口压力]/[额定流量] -  [结构形式]\n●示例： RX 0.4/300B\n○RX：燃气调压箱\n○0.4：最大进口压力 0.4MPa\n○300：额定流量 300m³/h\n○B：结构形式为1+1（一开一旁通）\n2.3 核心结构与设计\n1.模块化集成设计： 将过滤、调压、切断、计量等单元设计为独立模块，标准化接口，便于快速组装和维护。\n2.双路冗余设计： 主路故障时，副路自动或手动切换，保障连续供气。\n3.防喘振设计： 调压器阀芯采用平衡阀芯结构或两级调压结构，或具备防喘阻尼设计，内部通道优化，确保在小流量工况下调压稳定，防止压力波动。\n\n三、 材料工艺与技术特性\n3.1 生产工艺流程\n1.原材料检验： 阀体（材质分析、强度测试）、管道（壁厚检测、材质检测）、密封件（硬度、耐燃气性测试）。\n2.零部件加工：\n○阀体： 采用数控加工中心（CNC），关键密封面粗糙度 Ra≤0.8μm。\n○管道： 等离子/线切割/火焰切割/激光下料，使用自动焊机或手工氩弧焊焊接。\n3.表面处理： 碳钢件经抛丸除锈（达Sa2.5级）后，进行静电喷塑（涂层厚度≥60μm）或喷漆。\n4.部件组装： 按照 图纸装配，使用扭矩扳手等工具保证紧固力矩。\n5.测试检验：\n○无损检测：对重要焊缝进行射线探伤（RT）或磁粉检测（MT)/超声波探伤UT。\n○强度测试：1.5 倍设计压力且不低于0.6Mpa水压试验，保压无泄漏。\n○气密测试：1.0 倍设计压力气密性试验（保压60分钟无压降）。\n○性能测试：出口压力设定误差、安全装置启动压力设定误差，调压器静特性测试等。\n3.2 技术发展趋势\n●智能化 ： 集成 RTU/DTU 模块，支持 4G/5G/NB-IoT 传输，实时监控压力、温度、流量、阀门状态（开/关/故障），支持远程切断。\n\n四、 业务场景与选型规则\n4.1 核心业务场景拓扑\n场景ID\t场景名称\t关键特征 (Tags)\t核心痛点与需求解析\nSC_01\t居民小区 (楼栋/区域)\t低流量、高安全性要求、用气峰谷差大、贴近民宅。\t痛点： 用气高峰和低谷流量差异大（如早晚做饭），调压器在小流量时易产生"喘振"，影响末端灶具正常燃烧；与居民生活区"零距离"安装，任何燃气泄漏、超压都易引发群体性安全担忧和投诉\n需求： 采用内置防喘振设计（如平衡阀芯、两级调压结构，或具备防喘阻尼设计）的调压器；具备双重超压保护（切断+放散）\nSC_02\t工商业 (餐饮/综合体)\t负荷波动大、可靠性要求高。\t痛点： 用气设备启停频繁导致压力冲击；商业体停气影响大，需保障供气可靠性。\n\n需求： 选择响应速度快（≤300ms）的调压器；首选"2+1"或"2+0"\u200b 等多用配置，单路故障时备用路自动切入，实现不间断供气。\n\nSC_03\t工业园区 (化工/冶金)\t大流量连续供气、环境可能有腐蚀性。\t痛点： 停气会导致生产事故（如废品、设备损坏）；腐蚀性环境。\n 需求： 选 N+1 或 2+0 冗余结构；不锈钢材质或喷塑涂层；\nSC_04\t老旧管网改造\t接口非标增加安装困难\t痛点： 原有管道锈蚀、接口尺寸不规范\n需求： 定制化接口尺寸\n4.2 选型与配置规则\n●R1 [压力匹配]:\n○城市门站：进 1.6-4.0MPa -> 出 0.4MPa。\n○区域/工业：进 0.4-0.8MPa -> 出 5-20kPa。\n○居民小区：进 0.1-0.4MPa -> 出 2-3kPa。\n●R2 [流量结构]:\n○居民/小商业：额定流量 50-200m³/h，采用 1+0（单路），1+1 (一开一旁通) 或 2+0 (双路并联，正常时一开一备，流量大时同时开)。\n○大型工业：流量 >1000m³/h，建议 2+0（双路），2+1 (两开一备）。\n●R3 [环境材质]:\n○沿海/高湿/化工区：选用不锈钢箱体。\n○北方寒冷地区：配置电伴热系统 。\n●R4 [智能化]:\n○无人值守站：配置SCADA通讯接口，支持数据远传和故障诊断。\n4.3 相关方视角\n相关方\t核心关注点\t对选型与配置的具体要求\n采购\t全生命周期成本、合规与供应链\t1. 可追溯性：要求设备及核心部件具备永久性标识（如激光蚀刻二维码），实现生产、安装、维护全过程追溯。\n2. 供应商资质：严格审核特种设备生产许可、防爆认证、质量体系认证。\n3. 核心部件品牌：关注调压器、切断阀等关键部件的品牌口碑与通用性，便于后期替换。\n4. 标准化：推动规格型号系列化，减少备件种类，降低库存成本。\n5. 智能化潜力：评估设备是否支持后续加装智能模块。\n施工安装\t安装便利性、可靠性、施工效率\t1. 结构强度与精度：箱体结构牢固，能抵抗运输和安装中的变形；接口（法兰、螺纹）加工精度高，确保现场"对得上、装得稳"。\n2. 附件齐全：随箱提供高质量的安装附件，如密封垫片、紧固螺栓、防腐接头等，减少现场寻找配件的时间。\n3. 提升效率：青睐模块化设计的产品，能简化调试流程，缩短工期。\n运营\t长期稳定、安全可靠、维护简便\t1. 长期可靠性：产品经过长期市场验证，故障率低，"免维护"周期长。\n2. 供应保障：供应商备货充足，应急响应快，能保证维修配件的及时供应。\n\n\n五、 质量监控与验收\n5.1 关键质量检验指标\n检验维度\t检验项目\t标准/要求\t红线/严禁项 (黑名单)\n\t稳压精度\t出口压力实际值与设定值的偏差范围，通常要求 ≤±10% 或 ±15%（视等级而定）。\t稳压精度超出设计要求\n性能指标\t出口压力\t误差≤ ±5%\t波动过大（>5%）导致火焰不稳定\n\t关闭压力 (SG)\t流量为零时，调压器关闭后的出口密封压力（通常为设定压力的 1.1-1.25 倍）。\t关闭后压力持续爬升（内漏）\n\t切断响应时间\t≤ 2 秒\t紧急情况不动作或动作迟缓\n材料质量\t调压器阀体材质\tQT450-10，铝合金，铸钢\t严禁使用 灰铸铁 (HT200)\n\t漆膜厚度\t喷塑≥60μm\t漆膜过薄、流挂、漏喷\n制造工艺\t焊接质量\t无气孔、裂纹、未熔合 (需X光/磁粉探伤)\t焊缝咬边、焊瘤、未探伤\n\t装配密封\t1.15倍气压保压60分钟，无压降\t接口处肥皂水测试起泡\n资料合规\t产品证书\t合格证、压力容器监检证书\t无证出厂、参数虚标\n5.2 现场验收项目清单 (小白版)\n1.查铭牌： 流量、进出口压力范围是否与设计图纸一致？\n2.看外观： 箱体有无磕碰变形？油漆是否完整无剥落？流向箭头标识是否清晰？\n3.验焊缝： 管道焊接处是否平整鱼鳞状，无明显的坑洼气孔？\n4.试操作： 手动开关阀门是否顺畅？\n5.对接口： 法兰孔距和规格是否符合国标（HG/T 20592，GB/T 9124），密封面有无划痕？\n\n六、 供应商管理\n6.1 供应商画像结构\n●资质能力：\n○必须持有《特种设备生产许可证》（压力管道元件组合装置、金属阀门（调压器）和安全附件（切断阀））。\n○ISO 9001/14001/45001 体系认证。\n○核心部件（调压器）具备特种设备TS型式试验报告。\n●生产能力：\n○拥有自动化焊接机器人、数控加工中心（提高精度）。\n○具备全性能测试台（含调压器静特性）。\n●技术能力：\n○专利数量≥10项（核心部件自研能力）。\n○具备智能调压箱开发经验。\n●服务能力：\n○能提供及时的技术支持、备件供应和售后服务。\n\n\n6.2 评价与准入\n●第一梯队： 国际头部品牌（如费希尔久安 、飞奥等）。特点：特点：技术领先，产品线全，服务网络覆盖全，可靠性高，全生命周期性价比高，具备CNAS认证的实验室。\n●第二梯队：国产头部品牌（如特瑞斯、春晖、永良等）。特点：技术稳定，性价比较高，服务响应较快，是市场主流。\n●第三梯队： 组装厂。特点：核心部件外购，仅具备集成能力。特点：价格有竞争力，需严格考察其质量控制能力。\n●黑名单特征： 无特种设备资质；核心部件使用无牌、贴牌或仿造等劣劣质产品；历史发生过重大泄漏事故；无法提供备件服务。\n\n七、 安装、维护与常见问题\n7.1 安装要求\n●基础： 落地式需浇筑混凝土基础（如C30），高出地面≥0.3m，预埋地脚螺栓。\n●间距： 箱体四周需预留足够操作检修空间（前≥1.0m，侧/后≥0.5m）；远离明火源≥10m。\n●电气： 防爆区域设备必须可靠接地（接地电阻≤4Ω）；信号线需单独穿管保护。\n●管路： 进出口应安装绝缘接头；连接前必须彻底吹扫管道。\n7.2 维护保养周期\n●一级维保(落地柜6个月/楼栋箱12个月)： 对过滤器进行排污，检查各阀门的启闭灵活性，使用检测仪器检查泄漏情况，并检查调压器、切断阀、放散阀的设定值是否正确；对于多路配置（如两路以上），应进行主副路切换测试。\n\n●二级维保（落地柜12个月）： 包含一级维护保养的全部内容。检查调压器、切断阀等关键设备的运动部件（如阀口、阀芯）的磨损情况，并进行清洁或更换。\n\n●三级维保（落地柜48个月/楼栋箱60个月）： 包含二级维护保养的全部内容。对调压器、切断阀、放散阀等核心设备进行整体拆卸检查。更换所有内部的橡胶件（如膜片、O型圈、阀口密封垫等）。\n\n7.3 常见问题解决方案 (FAQ)\n●Q: 调压器出口压力波动大，下游设备（如灶具火焰）不稳定？\n○A: 下游用气流量过低，低于调压器稳定工作的最小流量，可能引发"喘振"；上游管网压力本身波动过大，超出了调压器的调节能力。\n\n●Q: 切断阀动作不灵敏（响应慢或卡涩）？\n○A: 触发传感器的顶杆位置未调整到位；脱扣机构内部机械部件摩擦阻力过大\n●Q: 调压器出口压力降低，无法达到设定值？\n○A: 调压器内部阀口、指挥器等通道被杂质堵塞或卡阻；进口过滤器滤芯堵塞严重，造成进气阻力过大；用户实际用气流量超过了调压器的额定设计流量\n●Q: 调压器出口压力异常升高，超过设定值？\n○A: 调压器膜片溶胀、老化、失去弹性或破损，无法正常响应压力变化\n；阀口处的密封垫片溶胀或老化，导致关闭不严；阀瓣组件内的O形密封圈损坏，造成内漏。\n\n\n八、 价格画像 (参考指导)\n注：价格受材质、流量、品牌、配置（是否智能、是否进口部件）影响极大，仅供参考。\n8.1 分类指导价区间\n产品大类\t规格/流量示例\t主要配置说明\t指导价区间\n(人民币/台套)\t价格敏感因素\n居民楼栋调压箱\u200b\t流量 ≤ 100 Nm³/h\n进/出口压力：中-低压\t不锈钢箱体，单路机械调压，基础安全装置。\t1,600 - 3,000（国产）\n5,000 - 15,000（进口）\t不锈钢板材价格波动、调压器品牌与材质（铸造铝/铜）、采购批量。\n落地式调压柜\u200b\t流量100- 1,000 Nm³/h\n中-中压或中-低压\t碳钢喷涂箱体，单路或双路（一用一备）调压，配置切断阀、放散阀。\t15,000 - 60,000\t钢材价格、调压阀与切断阀的规格品牌、阀门材质（铸铁/铸钢/不锈钢）、工艺复杂度。\n区域调压站/箱\u200b\t流量 > 1,000 Nm³/h\n高-中压或中-中压\t撬装式或箱式结构，双路或多路调压，高可靠性设计，配置高级监控（压力、温度）。\t150,000 - 500,000+\t大型阀门与管件成本、控制系统（PLC/SCADA）等级、防爆与安全认证要求、工程设计费。\n智能调压箱/柜\u200b\t覆盖上述各流量段\t在对应基础型号上，增加智能模块：物联网RTU、压力/流量/泄漏传感器、远程控制执行器、数据上传与云平台服务。\t基础价 + 15,000 - 50,000+ (智能附加成本）\t物联网通信模组与资费、传感器精度与防爆等级、数据平台开发与年服务费、电池与电源成本。\n8.2 成本构成拆解\n模型 A：居民楼栋调压箱 (以不锈钢箱体，单路结构为例)\n●直接材料 -- 占比约 60%-70%\n○核心部件：调压器阀体(铸造铝/球墨铸铁/碳钢)，约占材料成本的 40%。\n○箱体与结构：不锈钢板(304)，约占材料成本的 30%。\n○管路与阀门：球墨铸铁材质管路、球阀、活接头等。\n○配件：压力表、安全放散阀、紧固件、密封件等。\n●制造成本 -- 占比约 20%-25%\n○箱体下料、折弯、焊接、打磨抛光。\n○管路切割、焊接、组装、气密性测试。\n●检测、包装与综合费用 -- 占比约 10%-15%\n○出厂性能测试(设定压力、关闭压力等)。\n○包装(木箱/钢架)、运输、税金、管理费及利润。\n模型 B：普通落地式调压柜（不锈钢箱体，双路结构）\n●直接材料（占比约 50%-60%）\n○主材：不锈钢箱体与结构件、调压器、切断阀、过滤器、管道法兰等（合计约占材料成本70%）。\n○配件：仪表（压力表、流量计）、紧固件、密封件、放散管等。\n●制造成本（占比约 20%-25%）\n○下料、焊接、成型、机加工、喷涂等加工费。\n○装配、焊接与管道预制人工。\n●检测与调试（占比约 5%-10%）\n○压力测试、气密性检测、功能性调试。\n●综合费用与利润（占比约 15%-20%）\n○包装、运输、保险、税金、企业管理费、合理利润。\n\n九、 标准规范\n9.1 核心标准\n●GB 27790-2020 《城镇燃气调压器》：调压器的技术要求。\n●GB 27791-2020 《城镇燃气调压箱》：调压箱的技术要求。\n●CJ/T 335《城镇燃气切断阀和放散阀》：切断阀和放散阀的技术要求。\n●GB 50028-2006 (2020版) 《城镇燃气设计规范》：设计选型与安装安全规范。\n●GB/T 9124-2010 《钢制管法兰 第1部分：PN系列》：接口标准。\n●HG/T20592-2009《钢制管法兰、垫片及紧固件》（PN系列）\n9.2 引用标准\n●NB/T4730 《承压设备无损检测》：焊接质量检测。\n●GB/T 13927 《工业阀门 压力试验》：试压标准。\n●GB 3836 《爆炸性环境用防爆电气设备》：防爆要求。\n●GB/T 3091/8163：流体输送用钢管标准。\n●GB/T20801.1-2025 《压力管道规范 工业管道》\n●TSG31 《工业管道安全技术规程》'}
+INFO:perception.extractor:KnowledgeExtractor 开始提取知识 (长度: 7678)
+INFO:perception.extractor:长文档分块: 1 个块
+INFO:perception.extractor:正在抽取第 1/1 块 (长度: 857)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:perception.extractor:  → 本块抽取出 15 条三元组
+INFO:perception.extractor:成功提取 15 条去重后的结构化事实 (原始: 15)
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 50-5000m³/h (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[额定流量范围]-> 50-5000m³/h
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 50, 100, 150, 200, 300, 500, 700, 800, 1000, 1200, 1500, 2000, 2500, 3000, 5000m³/h (Entity)
+/Users/xiaochenwu/miniforge3/lib/python3.10/site-packages/neo4j/_sync/work/result.py:489: UserWarning: Expected a result with a single record, but found multiple.
+  warn("Expected a result with a single record, "
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[额定流量参数]-> 50, 100, 150, 200, 300, 500, 700, 800, 1000, 1200, 1500, 2000, 2500, 3000, 5000m³/h
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 额定流量 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 供气能力 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 额定流量 -[决定]-> 供气能力
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 额定流量 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 不低于实际最大小时流量的1.2倍 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 额定流量 -[采购策略]-> 不低于实际最大小时流量的1.2倍
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 居民用调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 50-200m³/h (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 居民用调压箱 -[额定流量]-> 50-200m³/h
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 工业用调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 500m³/h以上 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 工业用调压箱 -[额定流量]-> 500m³/h以上
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: DN25-DN300 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[进出口管径范围]-> DN25-DN300
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: DN50, DN80, DN100 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[常见进出口管径]-> DN50, DN80, DN100
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 调压结构 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 1+0(单路), 1+1(一开一旁通), 2+0(双路), 2+1(一开一备一旁通) (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 调压结构 -[类型]-> 1+0(单路), 1+1(一开一旁通), 2+0(双路), 2+1(一开一备一旁通)
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 调压结构 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 供气可靠性 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 调压结构 -[决定]-> 供气可靠性
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 中压B(0.01-0.2MPa), 次高压B(0.4-0.8MPa), 高压(1.6-4.0MPa) (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[进口压力级制]-> 中压B(0.01-0.2MPa), 次高压B(0.4-0.8MPa), 高压(1.6-4.0MPa)
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 进口压力级制 (Entity)
+INFO:memory.neo4j_adapter:Created entity: GB50028 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 进口压力级制 -[参照标准]-> GB50028
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 碳钢喷塑/不锈钢 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[箱体材质]-> 碳钢喷塑/不锈钢
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 304不锈钢 (Entity)
+INFO:memory.neo4j_adapter:Created entity: ≥1000h (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 304不锈钢 -[耐盐雾性能]-> ≥1000h
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 计量方式 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 无计量, 腰轮, 涡轮, 超声波 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 计量方式 -[类型]-> 无计量, 腰轮, 涡轮, 超声波
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 2/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_17672
+2026-04-01 11:21:54.054 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 11:24:17.070 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_72591
+2026-04-01 11:24:23.378 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 11:24:55.130 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_76159
+2026-04-01 11:25:20.721 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:core.permissions:Initialized PermissionManager with 5 default roles
+2026-04-01 12:21:29.521 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 12:21:38.060 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:agents.orchestrator:🔨 Agent triggered tool: [query_graph] with {'query': '燃气调压箱质量保证措施'}
+INFO:memory.vector_adapter:🔍 ChromaVectorStore: Retrieved 3 semantic matches for query: '燃气调压箱质量保证措施'
+INFO:agents.metacognition:开启元认知任务: [Hybrid GraphRAG Context: 调压结构 决定 供气可靠性 | 燃气调压箱需要在安全距离外至少5米部署。 | 燃气调压箱 要求 防爆设计] Target Query: 燃气调压箱质量保证措施
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 2/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_66058
+2026-04-01 12:21:49.590 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 12:22:43.270 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:agents.orchestrator:🔨 Agent triggered tool: [query_graph] with {'query': '燃气调压箱 关键质量点 检验方法'}
+INFO:memory.vector_adapter:🔍 ChromaVectorStore: Retrieved 3 semantic matches for query: '燃气调压箱 关键质量点 检验方法'
+INFO:agents.metacognition:开启元认知任务: [Hybrid GraphRAG Context: 计量方式 类型 无计量, 腰轮, 涡轮, 超声波 | 调压结构 决定 供气可靠性 | 燃气调压箱需要在安全距离外至少5米部署。] Target Query: 燃气调压箱 关键质量点 检验方法
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 2/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_47297
+2026-04-01 12:23:06.506 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:core.permissions:Initialized PermissionManager with 5 default roles
+[31m──[0m[31m────────────────────────[0m[31m [0m[1;31mTraceback [0m[1;2;31m(most recent call last)[0m[31m [0m[31m─────────────────────────[0m[31m──[0m
+[31m [0m [2;33m/Users/xiaochenwu/miniforge3/lib/python3.10/site-packages/streamlit/runtime/scriptru[0m [31m [0m
+[31m [0m [2;33mnner/[0m[1;33mexec_code.py[0m:[94m129[0m in [92mexec_func_with_error_handling[0m                               [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m [2;33m/Users/xiaochenwu/miniforge3/lib/python3.10/site-packages/streamlit/runtime/scriptru[0m [31m [0m
+[31m [0m [2;33mnner/[0m[1;33mscript_runner.py[0m:[94m689[0m in [92mcode_to_exec[0m                                            [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m [2;33m/Users/xiaochenwu/Desktop/Ontology-platform/examples/[0m[1;33mstreamlit_app.py[0m:[94m10[0m in [92m<module>[0m [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m   [2m  7 [0m                                                                               [31m [0m
+[31m [0m   [2m  8 [0m[94mfrom[0m[90m [0m[4;96mcore[0m[4;96m.[0m[4;96mreasoner[0m[90m [0m[94mimport[0m Reasoner, Fact                                       [31m [0m
+[31m [0m   [2m  9 [0m[94mfrom[0m[90m [0m[4;96mmemory[0m[4;96m.[0m[4;96mbase[0m[90m [0m[94mimport[0m SemanticMemory, EpisodicMemory                         [31m [0m
+[31m [0m [31m❱ [0m 10 [94mfrom[0m[90m [0m[4;96magents[0m[4;96m.[0m[4;96morchestrator[0m[90m [0m[94mimport[0m CognitiveOrchestrator                          [31m [0m
+[31m [0m   [2m 11 [0m                                                                               [31m [0m
+[31m [0m   [2m 12 [0mst.set_page_config(page_title=[33m"[0m[33mClawra 认知智能体[0m[33m"[0m, page_icon=[33m"[0m[33m🧠[0m[33m"[0m, layout=[33m"[0m[33mwid[0m [31m [0m
+[31m [0m   [2m 13 [0m                                                                               [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m [2;33m/Users/xiaochenwu/Desktop/Ontology-platform/src/agents/[0m[1;33morchestrator.py[0m:[94m13[0m in         [31m [0m
+[31m [0m [92m<module>[0m                                                                             [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m   [2m 10 [0m[94mfrom[0m[90m [0m[4;96mperception[0m[4;96m.[0m[4;96mextractor[0m[90m [0m[94mimport[0m KnowledgeExtractor                            [31m [0m
+[31m [0m   [2m 11 [0m[94mfrom[0m[90m [0m[4;96mevolution[0m[4;96m.[0m[4;96mself_correction[0m[90m [0m[94mimport[0m ContradictionChecker                     [31m [0m
+[31m [0m   [2m 12 [0m[94mfrom[0m[90m [0m[4;96magents[0m[4;96m.[0m[4;96mmetacognition[0m[90m [0m[94mimport[0m MetacognitiveAgent                            [31m [0m
+[31m [0m [31m❱ [0m 13 [94mfrom[0m[90m [0m[4;96mcore[0m[4;96m.[0m[4;96montology[0m[4;96m.[0m[4;96mactions[0m[90m [0m[94mimport[0m ActionRegistry, ActionType                   [31m [0m
+[31m [0m   [2m 14 [0m                                                                               [31m [0m
+[31m [0m   [2m 15 [0m[94mclass[0m[90m [0m[4;92mCognitiveOrchestrator[0m:                                                   [31m [0m
+[31m [0m   [2m 16 [0m[2;90m│   [0m[33m"""[0m                                                                        [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m [2;33m/Users/xiaochenwu/Desktop/Ontology-platform/src/core/ontology/[0m[1;33mactions.py[0m:[94m8[0m in        [31m [0m
+[31m [0m [92m<module>[0m                                                                             [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m   [2m 5 [0mlogger = logging.getLogger([91m__name__[0m)                                            [31m [0m
+[31m [0m   [2m 6 [0m                                                                                [31m [0m
+[31m [0m   [2m 7 [0m[1;95m@dataclass[0m                                                                      [31m [0m
+[31m [0m [31m❱ [0m 8 [94mclass[0m[90m [0m[4;92mActionType[0m:                                                               [31m [0m
+[31m [0m   [2m 9 [0m[2;90m│   [0m[33m"""[0m                                                                         [31m [0m
+[31m [0m   [2m10 [0m[2;33m│   [0m[33mPalantir-style Action Type[0m                                                  [31m [0m
+[31m [0m   [2m11 [0m                                                                                [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m [2;33m/Users/xiaochenwu/Desktop/Ontology-platform/src/core/ontology/[0m[1;33mactions.py[0m:[94m19[0m in       [31m [0m
+[31m [0m [92mActionType[0m                                                                           [31m [0m
+[31m [0m                                                                                      [31m [0m
+[31m [0m   [2m16 [0m[2m│   [0mname: [96mstr[0m                                                                   [31m [0m
+[31m [0m   [2m17 [0m[2m│   [0mdescription: [96mstr[0m                                                            [31m [0m
+[31m [0m   [2m18 [0m[2m│   [0mparameters: Dict[[96mstr[0m, Any] = field(default_factory=[96mdict[0m)                    [31m [0m
+[31m [0m [31m❱ [0m19 [2m│   [0mvalidation_logic: Optional[Callable] = [94mNone[0m                                 [31m [0m
+[31m [0m   [2m20 [0m[2m│   [0mexecution_logic: Optional[Callable] = [94mNone[0m                                  [31m [0m
+[31m [0m   [2m21 [0m                                                                                [31m [0m
+[31m [0m   [2m22 [0m[94mclass[0m[90m [0m[4;92mActionRegistry[0m:                                                           [31m [0m
+[31m────────────────────────────────────────────────────────────────────────────────────────[0m
+[1;91mNameError: [0mname [32m'Optional'[0m is not defined
+2026-04-01 13:11:00.706 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 13:11:08.741 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:agents.orchestrator:🔨 Agent triggered tool: [query_graph] with {'query': '燃气调压箱 质量检验 标准 方法'}
+INFO:memory.vector_adapter:🔍 ChromaVectorStore: Retrieved 3 semantic matches for query: '燃气调压箱 质量检验 标准 方法'
+INFO:agents.metacognition:开启元认知任务: [Hybrid GraphRAG Context: 计量方式 类型 无计量, 腰轮, 涡轮, 超声波 | 调压结构 决定 供气可靠性 | 额定流量 决定 供气能力] Target Query: 燃气调压箱 质量检验 标准 方法
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 2/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_26613
+2026-04-01 13:11:18.573 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 13:11:27.833 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:agents.orchestrator:🔨 Agent triggered tool: [query_graph] with {'query': '燃气调压箱选型'}
+INFO:memory.vector_adapter:🔍 ChromaVectorStore: Retrieved 3 semantic matches for query: '燃气调压箱选型'
+INFO:agents.metacognition:开启元认知任务: [Hybrid GraphRAG Context: 燃气调压箱 要求 防爆设计 | 调压结构 决定 供气可靠性 | 燃气调压箱 箱体材质 碳钢喷塑/不锈钢] Target Query: 燃气调压箱选型
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 2/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_43055
+2026-04-01 13:11:40.383 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:core.permissions:Initialized PermissionManager with 5 default roles
+2026-04-01 13:18:13.431 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 13:18:25.065 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:agents.orchestrator:🔨 Agent triggered tool: [ingest_knowledge] with {'text': '知识库-燃气调压箱\n品类名称： 燃气调压箱\n类目编码：19696\n所属类目： 石油开采、精炼工业用设备> 石油化工设备 > 调压设备 > 燃气调压箱\n更新日期： 2026年1月28日\n\n一、 基础定义与术语\n1.1 品类定义\n●燃气调压箱： 是一种将燃气调压器、紧急切断阀、放散阀、过滤器、压力仪表、流量计（可选）及控制系统（可选）等部件集成在金属箱体内的成套设备。\n●功能： 主要用于将上游管网的高压/中压燃气降至下游用户所需的中压/低压标准，并实现出口压力的自动稳定控制、超压切断保护、杂质过滤及流量计量（可选）等功能。\n●形态区分：\n○楼栋调压箱： 通常体积相对较小，壁挂于建筑外墙或设置于专用钢架平台上，主要为单栋或相邻楼宇供气。\n○落地调压柜： 通常体积较大，落地安装在地面混凝土基础上，服务范围较广，如小区、工商业区域或大型工业用户。\n1.2 核心术语表\n术语\t定义/说明\t来源标准\n进口压力 (P1)\t设备允许接入的上游管网压力范围（如 0.4-4.0 MPa）。\tGB 27791\n出口压力 (P2)\t经设备调节后输出的压力范围（如居民用气 2.5-3.0 kPa）。\tGB 27791\n额定流量 (Q)\t基准状态下，调压箱每路出口在最低进口压力、声明设定出口压力情况下通过的最大气体流量（Nm3/h）\tGB 27791\n稳压精度 (AC)\t出口压力实际值与设定值的偏差范围，通常要求 ≤±10% 或 ±15%（视等级而定）。\tGB 27790\n关闭压力 (SG)\t流量为零时，调压器关闭后的出口密封压力（通常为设定压力的 1.1-1.25 倍）。\tGB 27790\n切断压力\t当出口压力异常升高达到设定值（如10KPa＜出口压力P2≤80KPa时，切断压力是1.5 倍 P2）时，切断阀自动关闭的压力值。\tGB 27791\n放散压力\t当出口压力超过允许值（如如10KPa＜出口压力P2≤80KPa时，放散压力是1.25 倍 P2）时，放散阀开启释放气体的压力值。\tGB 27791\n结构形式\t指调压通路的数量与配置，如 1+0（一路调压）、1+1（一开一备）、2+0（双路运行）。\tGB 27791\n1.3 同义词与关联词\n●同义词： 燃气调压柜、调压站设备、楼栋调压箱、区域调压撬。\n●相关物资： 燃气调压器（核心部件）、流量计（腰轮/涡轮/超声波）、球阀（进出口控制）、压力表/压力变送器。\n\n二、 核心属性与规格\n2.1 关键参数属性\n属性维度\t关键参数/枚举值\t业务含义与采购策略\t关联供应商能力要求\n额定流量\t50, 100, 150，200, 300，500,700，800, 1000,1200,1500，2000,2500，3000,5000m³/h\t含义： 决定设备的供气能力。 \n策略： 额定流量应不低于实际最大小时流量的 1.2 倍；居民用调压箱多为 50-200m³/h，工业多为 500m³/h 以上。\t检测能力：需具备相应流量范围的测试装置，确保性能调试准确。\n进出口管径\tDN25 - DN300 (常见 DN50, DN80, DN100)\t含义： 接口规格，需与现场管道匹配。\n 策略： 老旧改造项目需实地测量原有管道尺寸，新建管网优先选标准法兰连接。\t加工能力：  具备精确的管道切割、坡口加工与焊接能力。\n调压结构\t1+0 (单路), 1+1 (一开一旁通), 2+0 (双路), 2+1(一开一备一旁通）\t含义： 决定供气可靠性。 \n策略： 居民/工业关键用户必选 1+1 或2+0或更高冗余配置，确保检修不停气；普通商业可由 1+0或1+1满足。\t集成能力： 模块化设计能力，布局合理，便于维护。\n进口压力级制\t0.01-0.2MPa (中压B), 0.4-0.8MPa (次高压B), 1.6-4.0MPa (高压),压力等级划分参照GB50028\t含义： 必须对应上游燃气管网的实际压力等级\n红线： 严禁低压设备接入高压管网。\t资质要求：生产涉及压力管道元件的，必须持有相应级别产品的《特种设备生产许可证》。\n材质配置\t箱体：碳钢喷塑/不锈钢\t含义： 决定耐用性。 \n策略： 选 304不锈钢 或 镀锌板+喷塑（耐盐雾≥1000h）。\t表面处理： 具备自动化的表面处理生产线（如喷塑），并能提供相关耐腐蚀测试报告。\n计量方式\t无计量, 腰轮, 涡轮, 超声波\t含义： 贸易结算或内部考核。\n策略： 小流量选腰轮，大流量稳态选涡轮，宽量程/复杂工况选超声波。\t校准能力： 若包含计量，流量计需经法定计量机构检定。\n2.2 规格型号编制规则（通用示例）\n●规则结构： [产品系列代号] - [最大进口压力]/[额定流量] -  [结构形式]\n●示例： RX 0.4/300B\n○RX：燃气调压箱\n○0.4：最大进口压力 0.4MPa\n○300：额定流量 300m³/h\n○B：结构形式为1+1（一开一旁通）\n2.3 核心结构与设计\n1.模块化集成设计： 将过滤、调压、切断、计量等单元设计为独立模块，标准化接口，便于快速组装和维护。\n2.双路冗余设计： 主路故障时，副路自动或手动切换，保障连续供气。\n3.防喘振设计： 调压器阀芯采用平衡阀芯结构或两级调压结构，或具备防喘阻尼设计，内部通道优化，确保在小流量工况下调压稳定，防止压力波动。\n\n三、 材料工艺与技术特性\n3.1 生产工艺流程\n1.原材料检验： 阀体（材质分析、强度测试）、管道（壁厚检测、材质检测）、密封件（硬度、耐燃气性测试）。\n2.零部件加工：\n○阀体： 采用数控加工中心（CNC），关键密封面粗糙度 Ra≤0.8μm。\n○管道： 等离子/线切割/火焰切割/激光下料，使用自动焊机或手工氩弧焊焊接。\n3.表面处理： 碳钢件经抛丸除锈（达Sa2.5级）后，进行静电喷塑（涂层厚度≥60μm）或喷漆。\n4.部件组装： 按照 图纸装配，使用扭矩扳手等工具保证紧固力矩。\n5.测试检验：\n○无损检测：对重要焊缝进行射线探伤（RT）或磁粉检测（MT)/超声波探伤UT。\n○强度测试：1.5 倍设计压力且不低于0.6Mpa水压试验，保压无泄漏。\n○气密测试：1.0 倍设计压力气密性试验（保压60分钟无压降）。\n○性能测试：出口压力设定误差、安全装置启动压力设定误差，调压器静特性测试等。\n3.2 技术发展趋势\n●智能化 ： 集成 RTU/DTU 模块，支持 4G/5G/NB-IoT 传输，实时监控压力、温度、流量、阀门状态（开/关/故障），支持远程切断。\n\n四、 业务场景与选型规则\n4.1 核心业务场景拓扑\n场景ID\t场景名称\t关键特征 (Tags)\t核心痛点与需求解析\nSC_01\t居民小区 (楼栋/区域)\t低流量、高安全性要求、用气峰谷差大、贴近民宅。\t痛点： 用气高峰和低谷流量差异大（如早晚做饭），调压器在小流量时易产生“喘振”，影响末端灶具正常燃烧；与居民生活区“零距离”安装，任何燃气泄漏、超压都易引发群体性安全担忧和投诉\n需求： 采用内置防喘振设计（如平衡阀芯、两级调压结构，或具备防喘阻尼设计）的调压器；具备双重超压保护（切断+放散）\nSC_02\t工商业 (餐饮/综合体)\t负荷波动大、可靠性要求高。\t痛点： 用气设备启停频繁导致压力冲击；商业体停气影响大，需保障供气可靠性。\n\n需求： 选择响应速度快（≤300ms）的调压器；首选“2+1”或“2+0”\u200b 等多用配置，单路故障时备用路自动切入，实现不间断供气。\n\nSC_03\t工业园区 (化工/冶金)\t大流量连续供气、环境可能有腐蚀性。\t痛点： 停气会导致生产事故（如废品、设备损坏）；腐蚀性环境。\n 需求： 选 N+1 或 2+0 冗余结构；不锈钢材质或喷塑涂层；\nSC_04\t老旧管网改造\t接口非标增加安装困难\t痛点： 原有管道锈蚀、接口尺寸不规范\n需求： 定制化接口尺寸\n4.2 选型与配置规则\n●R1 [压力匹配]:\n○城市门站：进 1.6-4.0MPa -> 出 0.4MPa。\n○区域/工业：进 0.4-0.8MPa -> 出 5-20kPa。\n○居民小区：进 0.1-0.4MPa -> 出 2-3kPa。\n●R2 [流量结构]:\n○居民/小商业：额定流量 50-200m³/h，采用 1+0（单路），1+1 (一开一旁通) 或 2+0 (双路并联，正常时一开一备，流量大时同时开)。\n○大型工业：流量 >1000m³/h，建议 2+0（双路），2+1 (两开一备）。\n●R3 [环境材质]:\n○沿海/高湿/化工区：选用不锈钢箱体。\n○北方寒冷地区：配置电伴热系统 。\n●R4 [智能化]:\n○无人值守站：配置SCADA通讯接口，支持数据远传和故障诊断。\n4.3 相关方视角\n相关方\t核心关注点\t对选型与配置的具体要求\n采购\t全生命周期成本、合规与供应链\t1. 可追溯性：要求设备及核心部件具备永久性标识（如激光蚀刻二维码），实现生产、安装、维护全过程追溯。\n2. 供应商资质：严格审核特种设备生产许可、防爆认证、质量体系认证。\n3. 核心部件品牌：关注调压器、切断阀等关键部件的品牌口碑与通用性，便于后期替换。\n4. 标准化：推动规格型号系列化，减少备件种类，降低库存成本。\n5. 智能化潜力：评估设备是否支持后续加装智能模块。\n施工安装\t安装便利性、可靠性、施工效率\t1. 结构强度与精度：箱体结构牢固，能抵抗运输和安装中的变形；接口（法兰、螺纹）加工精度高，确保现场“对得上、装得稳”。\n2. 附件齐全：随箱提供高质量的安装附件，如密封垫片、紧固螺栓、防腐接头等，减少现场寻找配件的时间。\n3. 提升效率：青睐模块化设计的产品，能简化调试流程，缩短工期。\n运营\t长期稳定、安全可靠、维护简便\t1. 长期可靠性：产品经过长期市场验证，故障率低，“免维护”周期长。\n2. 供应保障：供应商备货充足，应急响应快，能保证维修配件的及时供应。\n\n\n五、 质量监控与验收\n5.1 关键质量检验指标\n检验维度\t检验项目\t标准/要求\t红线/严禁项 (黑名单)\n\t稳压精度\t出口压力实际值与设定值的偏差范围，通常要求 ≤±10% 或 ±15%（视等级而定）。\t稳压精度超出设计要求\n性能指标\t出口压力\t误差≤ ±5%\t波动过大（>5%）导致火焰不稳定\n\t关闭压力 (SG)\t流量为零时，调压器关闭后的出口密封压力（通常为设定压力的 1.1-1.25 倍）。\t关闭后压力持续爬升（内漏）\n\t切断响应时间\t≤ 2 秒\t紧急情况不动作或动作迟缓\n材料质量\t调压器阀体材质\tQT450-10，铝合金，铸钢\t严禁使用 灰铸铁 (HT200)\n\t漆膜厚度\t喷塑≥60μm\t漆膜过薄、流挂、漏喷\n制造工艺\t焊接质量\t无气孔、裂纹、未熔合 (需X光/磁粉探伤)\t焊缝咬边、焊瘤、未探伤\n\t装配密封\t1.15倍气压保压60分钟，无压降\t接口处肥皂水测试起泡\n资料合规\t产品证书\t合格证、压力容器监检证书\t无证出厂、参数虚标\n5.2 现场验收项目清单 (小白版)\n1.查铭牌： 流量、进出口压力范围是否与设计图纸一致？\n2.看外观： 箱体有无磕碰变形？油漆是否完整无剥落？流向箭头标识是否清晰？\n3.验焊缝： 管道焊接处是否平整鱼鳞状，无明显的坑洼气孔？\n4.试操作： 手动开关阀门是否顺畅？\n5.对接口： 法兰孔距和规格是否符合国标（HG/T 20592，GB/T 9124），密封面有无划痕？\n\n六、 供应商管理\n6.1 供应商画像结构\n●资质能力：\n○必须持有《特种设备生产许可证》（压力管道元件组合装置、金属阀门（调压器）和安全附件（切断阀））。\n○ISO 9001/14001/45001 体系认证。\n○核心部件（调压器）具备特种设备TS型式试验报告。\n●生产能力：\n○拥有自动化焊接机器人、数控加工中心（提高精度）。\n○具备全性能测试台（含调压器静特性）。\n●技术能力：\n○专利数量≥10项（核心部件自研能力）。\n○具备智能调压箱开发经验。\n●服务能力：\n○能提供及时的技术支持、备件供应和售后服务。\n\n\n6.2 评价与准入\n●第一梯队： 国际头部品牌（如费希尔久安 、飞奥等）。特点：特点：技术领先，产品线全，服务网络覆盖全，可靠性高，全生命周期性价比高，具备CNAS认证的实验室。\n●第二梯队：国产头部品牌（如特瑞斯、春晖、永良等）。特点：技术稳定，性价比较高，服务响应较快，是市场主流。\n●第三梯队： 组装厂。特点：核心部件外购，仅具备集成能力。特点：价格有竞争力，需严格考察其质量控制能力。\n●黑名单特征： 无特种设备资质；核心部件使用无牌、贴牌或仿造等劣劣质产品；历史发生过重大泄漏事故；无法提供备件服务。\n\n七、 安装、维护与常见问题\n7.1 安装要求\n●基础：\u200b 落地式需浇筑混凝土基础（如C30），高出地面≥0.3m，预埋地脚螺栓。\n●间距：\u200b 箱体四周需预留足够操作检修空间（前≥1.0m，侧/后≥0.5m）；远离明火源≥10m。\n●电气：\u200b 防爆区域设备必须可靠接地（接地电阻≤4Ω）；信号线需单独穿管保护。\n●管路：\u200b 进出口应安装绝缘接头；连接前必须彻底吹扫管道。\n7.2 维护保养周期\n●一级维保(落地柜6个月/楼栋箱12个月)： 对过滤器进行排污，检查各阀门的启闭灵活性，使用检测仪器检查泄漏情况，并检查调压器、切断阀、放散阀的设定值是否正确；对于多路配置（如两路以上），应进行主副路切换测试。\n\n●二级维保（落地柜12个月）： 包含一级维护保养的全部内容。检查调压器、切断阀等关键设备的运动部件（如阀口、阀芯）的磨损情况，并进行清洁或更换。\n\n●三级维保（落地柜48个月/楼栋箱60个月）： 包含二级维护保养的全部内容。对调压器、切断阀、放散阀等核心设备进行整体拆卸检查。更换所有内部的橡胶件（如膜片、O型圈、阀口密封垫等）。\n\n7.3 常见问题解决方案 (FAQ)\n●Q: 调压器出口压力波动大，下游设备（如灶具火焰）不稳定？\n○A: 下游用气流量过低，低于调压器稳定工作的最小流量，可能引发“喘振”；上游管网压力本身波动过大，超出了调压器的调节能力。\n\n●Q: 切断阀动作不灵敏（响应慢或卡涩）？\n○A: 触发传感器的顶杆位置未调整到位；脱扣机构内部机械部件摩擦阻力过大\n●Q: 调压器出口压力降低，无法达到设定值？\n○A: 调压器内部阀口、指挥器等通道被杂质堵塞或卡阻；进口过滤器滤芯堵塞严重，造成进气阻力过大；用户实际用气流量超过了调压器的额定设计流量\n●Q: 调压器出口压力异常升高，超过设定值？\n○A: 调压器膜片溶胀、老化、失去弹性或破损，无法正常响应压力变化\n；阀口处的密封垫片溶胀或老化，导致关闭不严；阀瓣组件内的O形密封圈损坏，造成内漏。\n\n\n八、 价格画像 (参考指导)\n注：价格受材质、流量、品牌、配置（是否智能、是否进口部件）影响极大，仅供参考。\n8.1 分类指导价区间\n产品大类\t规格/流量示例\t主要配置说明\t指导价区间\n(人民币/台套)\t价格敏感因素\n居民楼栋调压箱\u200b\t流量 ≤ 100 Nm³/h\n进/出口压力：中-低压\t不锈钢箱体，单路机械调压，基础安全装置。\t1,600 - 3,000（国产）\n5,000 - 15,000（进口）\t不锈钢板材价格波动、调压器品牌与材质（铸造铝/铜）、采购批量。\n落地式调压柜\u200b\t流量100- 1,000 Nm³/h\n中-中压或中-低压\t碳钢喷涂箱体，单路或双路（一用一备）调压，配置切断阀、放散阀。\t15,000 - 60,000\t钢材价格、调压阀与切断阀的规格品牌、阀门材质（铸铁/铸钢/不锈钢）、工艺复杂度。\n区域调压站/箱\u200b\t流量 > 1,000 Nm³/h\n高-中压或中-中压\t撬装式或箱式结构，双路或多路调压，高可靠性设计，配置高级监控（压力、温度）。\t150,000 - 500,000+\t大型阀门与管件成本、控制系统（PLC/SCADA）等级、防爆与安全认证要求、工程设计费。\n智能调压箱/柜\u200b\t覆盖上述各流量段\t在对应基础型号上，增加智能模块：物联网RTU、压力/流量/泄漏传感器、远程控制执行器、数据上传与云平台服务。\t基础价 + 15,000 - 50,000+ (智能附加成本）\t物联网通信模组与资费、传感器精度与防爆等级、数据平台开发与年服务费、电池与电源成本。\n8.2 成本构成拆解\n模型 A：居民楼栋调压箱 (以不锈钢箱体，单路结构为例)\n●直接材料 -- 占比约 60%-70%\n○核心部件：调压器阀体(铸造铝/球墨铸铁/碳钢)，约占材料成本的 40%。\n○箱体与结构：不锈钢板(304)，约占材料成本的 30%。\n○管路与阀门：球墨铸铁材质管路、球阀、活接头等。\n○配件：压力表、安全放散阀、紧固件、密封件等。\n●制造成本 -- 占比约 20%-25%\n○箱体下料、折弯、焊接、打磨抛光。\n○管路切割、焊接、组装、气密性测试。\n●检测、包装与综合费用 -- 占比约 10%-15%\n○出厂性能测试(设定压力、关闭压力等)。\n○包装(木箱/钢架)、运输、税金、管理费及利润。\n模型 B：普通落地式调压柜（不锈钢箱体，双路结构）\n●直接材料（占比约 50%-60%）\n○主材：不锈钢箱体与结构件、调压器、切断阀、过滤器、管道法兰等（合计约占材料成本70%）。\n○配件：仪表（压力表、流量计）、紧固件、密封件、放散管等。\n●制造成本（占比约 20%-25%）\n○下料、焊接、成型、机加工、喷涂等加工费。\n○装配、焊接与管道预制人工。\n●检测与调试（占比约 5%-10%）\n○压力测试、气密性检测、功能性调试。\n●综合费用与利润（占比约 15%-20%）\n○包装、运输、保险、税金、企业管理费、合理利润。\n\n九、 标准规范\n9.1 核心标准\n●GB 27790-2020 《城镇燃气调压器》：调压器的技术要求。\n●GB 27791-2020 《城镇燃气调压箱》：调压箱的技术要求。\n●CJ/T 335《城镇燃气切断阀和放散阀》：切断阀和放散阀的技术要求。\n●GB 50028-2006 (2020版) 《城镇燃气设计规范》：设计选型与安装安全规范。\n●GB/T 9124-2010 《钢制管法兰 第1部分：PN系列》：接口标准。\n●HG/T20592-2009《钢制管法兰、垫片及紧固件》（PN系列）\n9.2 引用标准\n●NB/T4730 《承压设备无损检测》：焊接质量检测。\n●GB/T 13927 《工业阀门 压力试验》：试压标准。\n●GB 3836 《爆炸性环境用防爆电气设备》：防爆要求。\n●GB/T 3091/8163：流体输送用钢管标准。\n●GB/T20801.1-2025 《压力管道规范 工业管道》\n●TSG31 《工业管道安全技术规程》'}
+INFO:perception.extractor:KnowledgeExtractor 开始提取知识 (长度: 7682)
+INFO:perception.extractor:长文档分块: 1 个块
+INFO:perception.extractor:正在抽取第 1/1 块 (长度: 857)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:perception.extractor:  → 本块抽取出 15 条三元组
+INFO:perception.extractor:成功提取 15 条去重后的结构化事实 (原始: 15)
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 50, 100, 150, 200, 300, 500, 700, 800, 1000, 1200, 1500, 2000, 2500, 3000, 5000 m³/h (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[额定流量参数]-> 50, 100, 150, 200, 300, 500, 700, 800, 1000, 1200, 1500, 2000, 2500, 3000, 5000 m³/h
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 额定流量 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 决定设备的供气能力 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 额定流量 -[业务含义]-> 决定设备的供气能力
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 额定流量 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 额定流量应不低于实际最大小时流量的1.2倍 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 额定流量 -[采购策略]-> 额定流量应不低于实际最大小时流量的1.2倍
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 额定流量 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 居民用调压箱多为50-200m³/h，工业多为500m³/h以上 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 额定流量 -[适用场景]-> 居民用调压箱多为50-200m³/h，工业多为500m³/h以上
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: DN25-DN300，常见DN50, DN80, DN100 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[进出口管径范围]-> DN25-DN300，常见DN50, DN80, DN100
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 进出口管径 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 接口规格，需与现场管道匹配 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 进出口管径 -[业务含义]-> 接口规格，需与现场管道匹配
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 进出口管径 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 老旧改造项目需实地测量原有管道尺寸，新建管网优先选标准法兰连接 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 进出口管径 -[采购策略]-> 老旧改造项目需实地测量原有管道尺寸，新建管网优先选标准法兰连接
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 1+0(单路), 1+1(一开一旁通), 2+0(双路), 2+1(一开一备一旁通) (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[调压结构类型]-> 1+0(单路), 1+1(一开一旁通), 2+0(双路), 2+1(一开一备一旁通)
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 调压结构 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 决定供气可靠性 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 调压结构 -[业务含义]-> 决定供气可靠性
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 调压结构 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 居民/工业关键用户必选1+1或2+0或更高冗余配置，确保检修不停气；普通商业可由1+0或1+1满足 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 调压结构 -[采购策略]-> 居民/工业关键用户必选1+1或2+0或更高冗余配置，确保检修不停气；普通商业可由1+0或1+1满足
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 0.01-0.2MPa(中压B), 0.4-0.8MPa(次高压B), 1.6-4.0MPa(高压) (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[进口压力级制]-> 0.01-0.2MPa(中压B), 0.4-0.8MPa(次高压B), 1.6-4.0MPa(高压)
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 进口压力级制 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 必须对应上游燃气管网的实际压力等级 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 进口压力级制 -[业务含义]-> 必须对应上游燃气管网的实际压力等级
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 进口压力级制 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 严禁低压设备接入高压管网 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 进口压力级制 -[红线要求]-> 严禁低压设备接入高压管网
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 燃气调压箱 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 碳钢喷塑/不锈钢 (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 燃气调压箱 -[箱体材质]-> 碳钢喷塑/不锈钢
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:memory.neo4j_adapter:Created entity: 材质配置 (Entity)
+INFO:memory.neo4j_adapter:Created entity: 选304不锈钢或镀锌板+喷塑（耐盐雾≥1000h） (Entity)
+INFO:memory.neo4j_adapter:Created relationship: 材质配置 -[采购策略]-> 选304不锈钢或镀锌板+喷塑（耐盐雾≥1000h）
+INFO:memory.vector_adapter:💾 ChromaVectorStore: Added 1 dense vectors.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 2/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_17267
+2026-04-01 13:20:11.079 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 13:20:26.510 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:openai._base_client:Retrying request to /chat/completions in 0.461895 seconds
+INFO:openai._base_client:Retrying request to /chat/completions in 0.994326 seconds
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:agents.orchestrator:🔨 Agent triggered tool: [query_graph] with {'query': '燃气调压箱 质量检验 质量关注点'}
+INFO:memory.vector_adapter:🔍 ChromaVectorStore: Retrieved 3 semantic matches for query: '燃气调压箱 质量检验 质量关注点'
+INFO:agents.metacognition:开启元认知任务: [Hybrid GraphRAG Context: 燃气调压箱 要求 防爆设计 | 调压结构 业务含义 决定供气可靠性 | 调压结构 决定 供气可靠性] Target Query: 燃气调压箱 质量检验 质量关注点
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 2/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_67624
+2026-04-01 13:20:52.432 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+2026-04-01 13:22:11.059 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+INFO:agents.orchestrator:Orchestrator LLM Request (Agent Loop -> 1/6)
+INFO:httpx:HTTP Request: POST https://api.siliconflow.cn/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_44745
+2026-04-01 13:22:29.259 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.

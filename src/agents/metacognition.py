@@ -21,5 +21,25 @@ class MetacognitiveAgent(BaseAgent):
     async def run(self, task: str) -> Dict[str, Any]:
         """执行任务循环：思考 -> 反思 -> 行动 -> 学习"""
         logger.info(f"开启元认知任务: {task}")
-        # 实现典型的元认知回路
-        return {"status": "success", "result": "Thinking complete"}
+        
+        # 执行前向链推理，获取结构化推理结果
+        inference = self.reasoner.forward_chain(max_depth=5)
+        explanation = self.reasoner.explain(inference)
+        
+        # 构建结构化推理步骤
+        steps = []
+        for step in inference.conclusions:
+            steps.append({
+                "rule": step.rule.name,
+                "premise": f"({step.matched_facts[0].subject} → {step.matched_facts[0].predicate} → {step.matched_facts[0].object})",
+                "conclusion": f"({step.conclusion.subject} → {step.conclusion.predicate} → {step.conclusion.object})",
+                "confidence": round(step.confidence.value, 4)
+            })
+        
+        return {
+            "status": "success",
+            "result": explanation,
+            "inference_steps": steps,
+            "facts_used_count": len(inference.facts_used),
+            "total_confidence": round(inference.total_confidence.value, 4)
+        }
