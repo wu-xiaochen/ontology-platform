@@ -234,22 +234,29 @@ if prompt := st.chat_input("灌输知识或发起逻辑查询..."):
     with st.chat_message("assistant"):
         status = st.status("🚀 Clawra 正在激发神经突触...", expanded=True)
         try:
-            # 强化型异步运行器 (兼容 Streamlit 且防死锁)
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            
-            # 使用 nest_asyncio 解决 Streamlit 已有 loop 的问题
-            import nest_asyncio
-            nest_asyncio.apply()
-            
+            # 强化型线程隔离异步运行器 (彻底解决 uvloop 冲突)
+            import threading
+            from concurrent.futures import ThreadPoolExecutor
+
+            def _run_in_new_loop(msgs, prompt):
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    return new_loop.run_until_complete(
+                        st.session_state.orchestrator.execute_task(msgs, custom_prompt=prompt)
+                    )
+                finally:
+                    new_loop.close()
+
             start_time = time.time()
-            response = loop.run_until_complete(st.session_state.orchestrator.execute_task(
-                st.session_state.messages,
-                custom_prompt=st.session_state.get("custom_system_prompt")
-            ))
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    _run_in_new_loop, 
+                    st.session_state.messages, 
+                    st.session_state.get("custom_system_prompt")
+                )
+                response = future.result()
+            
             latency = time.time() - start_time
             
             # 更新状态展示
