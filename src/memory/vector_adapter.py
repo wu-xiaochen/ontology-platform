@@ -48,7 +48,7 @@ class ChromaVectorStore(VectorStore):
             
         ids = [f"doc_{hashlib.md5(doc.content.encode()).hexdigest()}" for doc in documents]
         contents = [doc.content for doc in documents]
-        metadatas = [doc.metadata for doc in documents]
+        metadatas = [doc.metadata if doc.metadata else {"source": "unknown"} for doc in documents]
         
         self.collection.add(
             documents=contents,
