@@ -1,6 +1,13 @@
 """
 推理引擎 (Reasoner)
 基于规则的推理引擎，支持前向链和后向链推理
+
+⚠️ OWL 语义注意事项：
+本引擎基于开放世界假设 (OWA) 运行。
+- 约束 (constraints) 不等同于数据库的外键约束
+- owl:someValuesFrom/owl:allValuesFrom 表达存在性/全称量化， 非闭路校验
+- 基数限制 (min/max) 不等同于唯一性约束
+详见: OWL_SEMANTICS.md
 """
 
 import re

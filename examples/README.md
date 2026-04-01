@@ -16,6 +16,22 @@ PYTHONPATH=src python examples/demo_confidence_reasoning.py
 
 ## 📚 示例列表
 
+### 0. hello_ontology.py - 基础入门示例
+
+**难度**: ⭐ 入门  
+**展示功能**: 核心组件导入、知识学习、规则添加、基础推理、置信度计算
+
+**运行**:
+```bash
+PYTHONPATH=src python examples/hello_ontology.py
+```
+
+**功能亮点**:
+- ✅ 最简示例，5 分钟上手
+- ✅ 展示完整工作流
+- ✅ 零依赖，直接运行
+- ✅ 适合第一次使用
+
 ### 1. complete_integration_demo.py - 完整集成演示
 
 **难度**: ⭐⭐⭐ 中级  
@@ -101,7 +117,8 @@ PYTHONPATH=src python examples/agent_growth_demo.py
 
 | 你的需求 | 推荐示例 |
 |---------|---------|
-| 第一次使用 | `demo_confidence_reasoning.py` |
+| 第一次使用 | `hello_ontology.py` |
+| 了解置信度 | `demo_confidence_reasoning.py` |
 | 了解完整功能 | `complete_integration_demo.py` |
 | 业务场景参考 | `demo_supplier_monitor.py` |
 | 复杂应用开发 | `hiring_assistant_demo.py` |

@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # 本体分析 API
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=ollama:11434
+      - GRAPHDB_HOST=graphdb:7200
+      - REDIS_HOST=redis:6379
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./prompts:/app/prompts
+    depends_on:
+      - ollama
+      - graphdb
+      - redis
+    networks:
+      - ontology-net
+    restart: unless-stopped
+
+  # 本地 LLM 服务
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - ontology-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # GraphDB 知识图谱数据库
+  graphdb:
+    image: ontotext/graphdb:10.6.0-free
+    ports:
+      - "7200:7200"
+    environment:
+      - GDB_HEAP_SIZE=4g
+    volumes:
+      - graphdb-data:/opt/graphdb/data
+      - graphdb-logs:/opt/graphdb/logs
+    networks:
+      - ontology-net
+    restart: unless-stopped
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - ontology-net
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  # 可选：nginx 反向代理
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - api
+  #   networks:
+  #     - ontology-net
+
+networks:
+  ontology-net:
+    driver: bridge
+
+volumes:
+  ollama-data:
+  graphdb-data:
+  redis-data:

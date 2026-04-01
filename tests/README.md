@@ -9,6 +9,8 @@ tests/
 ├── test_confidence.py   # 置信度计算测试
 ├── test_evidence.py     # 证据管理测试
 ├── test_reasoner.py     # 推理引擎测试
+├── test_chunking.py     # 文档分块测试
+├── test_memory.py       # 记忆治理测试
 └── __init__.py
 ```
 
@@ -38,6 +40,12 @@ pytest tests/test_reasoner.py -v
 
 # 运行证据测试
 pytest tests/test_evidence.py -v
+
+# 运行分块测试
+pytest tests/test_chunking.py -v
+
+# 运行记忆治理测试
+pytest tests/test_memory.py -v
 ```
 
 ### 运行特定测试
@@ -59,6 +67,8 @@ pytest tests/ -k "confidence" -v
 | 置信度计算 | `test_confidence.py` | 4 | ✅ |
 | 证据管理 | `test_evidence.py` | 3 | ✅ |
 | 推理引擎 | `test_reasoner.py` | 8 | ✅ |
+| 文档分块 | `test_chunking.py` | 13 | ✅ |
+| 记忆治理 | `test_memory.py` | 15 | ✅ |
 
 ### 待补充测试
 
