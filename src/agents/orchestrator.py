@@ -5,11 +5,11 @@ from typing import Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
-from core.reasoner import Reasoner, Fact
+from core.reasoner import Reasoner
 from memory.base import SemanticMemory, EpisodicMemory
 from perception.extractor import KnowledgeExtractor
 from evolution.self_correction import ContradictionChecker
-from agents.agent import MetacognitiveAgent
+from agents.metacognition import MetacognitiveAgent
 
 class CognitiveOrchestrator:
     """
@@ -162,7 +162,7 @@ class CognitiveOrchestrator:
                         context_str = " | ".join([doc.content for doc in vector_context])
                         
                         agent_response = await self.reasoning_agent.run(f"[Hybrid GraphRAG Context: {context_str}] Target Query: {query}")
-                        tool_result_str = json.dumps({"status": "SUCCESS", "logic_engine_conclusion": agent_response}, ensure_ascii=False)
+                        tool_result_str = json.dumps({"status": "SUCCESS", "logic_engine_conclusion": str(agent_response)}, ensure_ascii=False)
                         trace_node["result"] = "Deep reasoning generated."
                         
                     else:
@@ -194,7 +194,7 @@ class CognitiveOrchestrator:
             "messages_length": len(messages),
             "final_intent": response_data["intent"],
             "tool_use_count": len(response_data["trace"]),
-            "response": response_data["message"]
+            "response": str(response_data.get("message", ""))
         })
             
         return response_data
