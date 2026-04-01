@@ -135,7 +135,8 @@ class CognitiveOrchestrator:
                 "content": (
                     custom_prompt or (
                         f"[Clawra Cognitive Kernel]\n{self.project_context}\n\n"
-                        "1. Use 'ingest_knowledge' for new data. 2. Use 'query_graph' for reasoning. YOU MUST USE TOOLS."
+                        "1. ALWAYS think step-by-step and explain your logical reasoning in your message content BEFORE calling any tool.\n"
+                        "2. Use 'ingest_knowledge' for new data. 3. Use 'query_graph' for reasoning. YOU MUST USE TOOLS."
                     )
                 )
             }
@@ -161,6 +162,16 @@ class CognitiveOrchestrator:
             response_message = completion.choices[0].message
             local_messages.append(response_message.model_dump(exclude_unset=True))
             
+            # 捕捉 LLM 的原生思维链 (Chain of Thought)
+            if response_message.content and response_message.content.strip():
+                trace_thought = {
+                    "tool": "💭 神经元推导 (Internal Reasoning)",
+                    "args": {},
+                    "latency": "-",
+                    "result": {"summary": response_message.content.strip()}
+                }
+                response_data["trace"].append(trace_thought)
+
             if not response_message.tool_calls:
                 response_data["message"] = response_message.content
                 break

@@ -107,15 +107,15 @@ class SemanticMemory:
         if not self.is_connected:
             return "1"
             
-        # 模拟图查询逻辑
-        # 实际生产中应执行 MATCH (e:Entity {name: $name})-[:has_grain]->(g) RETURN g.cardinality
-        # 此处我们保持兼容性，同时也支持同义词归一化
-        norm_name = self.normalize_entity(entity_name)
+        # 真实环境下的粒度查询应依赖图谱中的事实
+        # MATCH (e:Entity {name: $norm_name})-[:has_grain]->(g) RETURN g.cardinality
         
-        # 实时查询：如果图谱中有记录则返回，否则兜底
-        # 为了演示，我们假设 'OrderItem' 在图中定义为 'N'
-        if norm_name in ["OrderItem", "Order", "订单项", "订单"]:
+        # 为了框架开源可用性，我们提供一种基于规则的兜底评估
+        # 凡是带有“清单”、“项”、“明细”、“列表”的实体，默认为 N 端 (Many)
+        if any(keyword in norm_name for keyword in ["Item", "List", "Detail", "项", "明细", "清单", "列表"]):
             return "N"
+            
+        # 默认返回 '1' 以保安全
         return "1"
 
 import json
