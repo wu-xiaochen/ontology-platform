@@ -157,54 +157,60 @@ with st.sidebar:
 # 常规渲染函数
 # =========================================
 def render_trace_node(node):
-    """渲染单个推理节点"""
+    """渲染单个推理节点（鲁棒性升级版）"""
     tool = node.get("tool", "Unknown")
-    args = node.get("args", {})
+    latency = node.get("latency", "0s")
     result = node.get("result", {})
     
     with st.container():
-        st.markdown(f"#### 🔌 {tool} | {node.get('latency', '')}")
+        st.markdown(f"#### 🔌 {tool} | {latency}")
         
-        # Ingest 结果
-        if tool == "ingest_knowledge":
-            if "accepted_triples" in result:
-                st.write(f"✅ **新发现公理 ({len(result['accepted_triples'])}):**")
-                triples = [t["triple"] for t in result["accepted_triples"]]
-                st.code("\n".join(triples), language="text")
-            if "rejected_triples" in result:
-                st.write("❌ **被拒绝冲突项:**")
-                for r in result["rejected_triples"]:
-                    st.caption(f"{r['triple']} — {r['reason']}")
-        
-        # Query 结果
-        elif tool == "query_graph":
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                if "reasoning_chain" in result and result["reasoning_chain"]:
-                    st.write("**🧠 逻辑推导链 (Forward Chaining):**")
-                    for step in result["reasoning_chain"]:
-                        st.caption(f"- IF `{step['premise']}` THEN `{step['conclusion']}` (Conf: {step['confidence']:.2f})")
-                
-                if "metacognition" in result:
-                    meta = result["metacognition"]
-                    st.write("**💡 元认知反思:**")
-                    st.info(meta.get("result", "Thinking..."))
+        # 1. 结构化状态检查
+        if isinstance(result, dict):
+            status = result.get("status", "UNKNOWN")
             
-            with col2:
-                if "grain_check" in result:
-                    grain = result["grain_check"]
-                    st.write("**🛡️ 粒度审计:**")
-                    if grain["status"] == "SAFE":
-                        st.success("Grain Verified")
-                    else:
-                        st.error(f"Grain Risk: {grain['risk_level']}")
-                        st.caption(grain["message"])
-        
-        # Action 结果
-        elif tool == "execute_action":
-            st.write(f"⚡ **Kinetic Action:** `{result.get('summary', 'Executing')}`")
-            if "execution_impact" in result:
-                st.success(result["execution_impact"])
+            if status == "BLOCKED":
+                st.error(f"🚫 **审计拦截**: {result.get('summary', '被拦截')}")
+                if "risks" in result:
+                    for risk in result["risks"]:
+                        st.caption(f"⚠️ {risk}")
+                return
+            
+            if status == "ERROR":
+                st.error(f"❌ **执行错误**: {result.get('msg', '未知故障')}")
+                return
+
+            if "summary" in result:
+                st.info(result["summary"])
+
+            # 专用工具渲染逻辑
+            if tool == "ingest_knowledge":
+                if "accepted_triples" in result:
+                    triples = [t.get("triple", "") for t in result["accepted_triples"]]
+                    st.code("\n".join(triples), language="text")
+            
+            elif tool == "query_graph":
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    if "reasoning_chain" in result and result["reasoning_chain"]:
+                        st.write("**🧠 逻辑推导链:**")
+                        for s in result["reasoning_chain"]:
+                            st.caption(f"- {s.get('conclusion', '')}")
+                    
+                    if "metacognition" in result:
+                        meta = result["metacognition"]
+                        st.info(f"💡 {meta.get('result', 'Thinking...')}")
+                
+                with col2:
+                    if "vector_context" in result:
+                        st.write("**🔍 向量召回:**")
+                        st.caption(f"Hits: {len(result['vector_context'])}")
+            
+            elif tool == "execute_action":
+                if "impact" in result:
+                    st.success(result["impact"])
+        else:
+            st.write(str(result))
 
 # =========================================
 # 主界面对话逻辑
@@ -215,43 +221,57 @@ st.title("💡 Clawra Cognitive Console")
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-        if "trace" in msg:
-            with st.expander("🧐 深度认知轨迹 (High-Fidelity Reasoning Trace)"):
+        if "trace" in msg and msg["trace"]:
+            with st.expander("🧐 深度认知轨迹 (High-Fidelity Reasoning Trace)", expanded=False):
                 for node in msg["trace"]:
                     render_trace_node(node)
 
 # 输入框
 if prompt := st.chat_input("灌输知识或发起逻辑查询..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    st.chat_message("user").markdown(prompt)
 
     with st.chat_message("assistant"):
-        # 实时思考动画
         status = st.status("🚀 Clawra 正在激发神经突触...", expanded=True)
-        
-        start_time = time.time()
-        # 执行 Orchestrator 任务
-        response_data = asyncio.run(st.session_state.orchestrator.execute_task(st.session_state.messages))
-        latency = time.time() - start_time
-        
-        # 更新状态节点
-        trace_logs = response_data.get("trace", [])
-        for node in trace_logs:
-            status.update(label=f"✅ 已完成 {node.get('tool')} 调用", state="running")
-            time.sleep(0.1)
-        
-        status.update(label=f"✨ 推理完成 (耗时 {latency:.2f}s)", state="complete", expanded=False)
-        
-        reply = response_data.get("message", "")
-        st.markdown(reply)
-        
-        # 记录和保存
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": reply, 
-            "trace": trace_logs
-        })
-        
-        # 重新运行刷新 UI
-        st.rerun()
+        try:
+            # 强化型异步运行器 (兼容 Streamlit 且防死锁)
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            # 使用 nest_asyncio 解决 Streamlit 已有 loop 的问题
+            import nest_asyncio
+            nest_asyncio.apply()
+            
+            start_time = time.time()
+            response = loop.run_until_complete(st.session_state.orchestrator.execute_task(
+                st.session_state.messages,
+                custom_prompt=st.session_state.get("custom_system_prompt")
+            ))
+            latency = time.time() - start_time
+            
+            # 更新状态展示
+            trace_logs = response.get("trace", [])
+            for node in trace_logs:
+                status.write(f"✅ {node.get('tool')} ({node.get('latency', '0s')})")
+            
+            status.update(label=f"✨ 推理完成 (耗时 {latency:.2f}s)", state="complete", expanded=False)
+            
+            # 显示回复
+            st.markdown(response["message"])
+            
+            # 保存到 session
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": response["message"],
+                "trace": trace_logs
+            })
+            
+            # 强制刷新 UI
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"致命故障: {e}")
+            status.update(label="❌ 推理引擎熔断", state="error", expanded=True)
