@@ -19,7 +19,7 @@ async def run_phase3_demo():
 
     # Initialize Modules
     reasoner = Reasoner()
-    semantic_memory = SemanticMemory() # Neo4j instance
+    SemanticMemory() # Neo4j instance
     episodic_memory = EpisodicMemory(db_path="data/demo_episodic.db")
     extractor = KnowledgeExtractor(use_mock_llm=True)
     sentinel = ContradictionChecker(reasoner=reasoner)

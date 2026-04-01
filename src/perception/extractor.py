@@ -1,6 +1,5 @@
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import List
 from pydantic import BaseModel, Field
 from core.reasoner import Fact
 

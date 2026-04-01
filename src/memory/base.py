@@ -1,7 +1,8 @@
 import logging
-from typing import Any, List, Optional, Dict
+from typing import Any, List
 from core.reasoner import Fact
 from .neo4j_adapter import Neo4jClient
+from .vector_adapter import LightweightVectorStore, Document
 
 logger = logging.getLogger(__name__)
 
@@ -9,12 +10,13 @@ class SemanticMemory:
     """
     语义内存 (Semantic Memory)
     
-    存储经过验证的知识图谱。默认使用 Neo4j 作为高性能后端。
-    支持本体知识的持久化、检索和复杂的图查询。
+    存储经过验证的知识图谱。默认使用 Neo4j 作为高性能后端，并辅以 VectorStore 提供模糊语义检索 (Hybrid GraphRAG)。
+    支持本体知识的持久化、检索、图查询和向量查询。
     """
     def __init__(self, uri: str = "bolt://localhost:7687", 
                  user: str = "neo4j", password: str = "neo4j"):
         self.client = Neo4jClient(uri=uri, user=user, password=password)
+        self.vector_store = LightweightVectorStore()
         self.is_connected = False
         
     def connect(self):
@@ -26,20 +28,30 @@ class SemanticMemory:
             logger.warning("Semantic Memory failed to connect to Neo4j. Operating in memory mode.")
 
     def store_fact(self, fact: Fact):
-        """将推理事实存入图数据库"""
+        """将推理事实同步存入图数据库与向量数据库"""
         self.client.create_entity(fact.subject, "Entity")
         self.client.create_entity(fact.object, "Entity")
         self.client.create_relationship(
             fact.subject, fact.object, fact.predicate, 
             confidence=fact.confidence
         )
+        # 同步写入向量索引
+        vector_doc = Document(
+            content=f"{fact.subject} {fact.predicate} {fact.object}",
+            metadata={"source": fact.source, "confidence": fact.confidence}
+        )
+        self.vector_store.add_documents([vector_doc])
 
     def query(self, concept: str, depth: int = 2) -> List[Any]:
-        """查询语义网络中与该概念相关的知识"""
+        """查询语义网络中与该概念相关的精确图谱知识 (Graph Traversal)"""
         if not self.is_connected:
             return []
         result = self.client.find_neighbors(concept, depth=depth)
         return result.nodes
+
+    def semantic_search(self, query: str, top_k: int = 3) -> List[Document]:
+        """模糊语义查询 (Vector Similarity)"""
+        return self.vector_store.similarity_search(query, top_k=top_k)
 
 import json
 import sqlite3

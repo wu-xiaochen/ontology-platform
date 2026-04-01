@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
-from core.reasoner import Reasoner, Fact
+from typing import Any, Dict
+from core.reasoner import Reasoner
 
 logger = logging.getLogger(__name__)
 

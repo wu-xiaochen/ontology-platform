@@ -41,8 +41,8 @@ async def run_demo():
     reasoner = Reasoner()
     semantic_memory = SemanticMemory() # 内部集成 Neo4j
     episodic_memory = EpisodicMemory()
-    distiller = KnowledgeDistiller(reasoner)
-    extractor = KnowledgeExtractor()
+    KnowledgeDistiller(reasoner)
+    KnowledgeExtractor()
     
     # 2. 部署元认知智能体 (The Actor)
     agent = MetacognitiveAgent(name="SafetyAuditor", reasoner=reasoner)
@@ -83,7 +83,7 @@ async def run_demo():
     task = "Evaluate 'SafeGas_Corp' for safety compliance."
     
     # 执行任务前，智能体先进行逻辑反思 (Reflection)
-    if await agent.reflect(f"Is SafeGas_Corp safe for high-pressure operations?"):
+    if await agent.reflect("Is SafeGas_Corp safe for high-pressure operations?"):
         logger.info("Agent Reflection: Initial logic check passed.")
     
     # 执行推理
