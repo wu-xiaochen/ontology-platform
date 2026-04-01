@@ -3,7 +3,7 @@ import os
 import sys
 import time
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../src'))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from core.reasoner import Reasoner, Fact
 from memory.base import SemanticMemory, EpisodicMemory
@@ -58,45 +58,30 @@ if prompt := st.chat_input("输入查询意图或业务语料..."):
 
     # Clawra 大脑处理
     with st.chat_message("assistant"):
-        with st.spinner("Clawra 混合引掣思考中 (GraphRAG + Logic)..."):
+        with st.spinner("Clawra 混合引掣思考中 (ReAct Agent Loop)..."):
+            import asyncio
             start_time = time.time()
-            response_data = st.session_state.orchestrator.route_intent(prompt)
+            response_data = asyncio.run(st.session_state.orchestrator.execute_task(st.session_state.messages))
             latency = time.time() - start_time
             
-            # 解析响应结构
-            # 格式： {"intent": ..., "status": ..., "response": ..., "details": ...}
             intent = response_data.get("intent", "UNKNOWN")
+            reply = response_data.get("message", "")
             
             if intent == "INGEST":
-                reply = f"✅ 已成功将知识摄入系统图谱。\n\n**抽取出的结构化三元组:**\n"
-                for item in response_data.get("details", {}).get("extracted_facts", []):
+                reply += f"\n\n**抽取出的结构化三元组:**\n"
+                facts = response_data.get("facts", [])
+                for item in facts:
                     reply += f"- `({item[0]} -> {item[1]} -> {item[2]})`\n"
-                    
-                trace_log = f"""[Intent Routing]: INGEST
-[Perception Layer]: OpenAI Structured Output (or fallback)
-[Evolution Sentinel]: Cypher DisjointCheck -> Passed
-[Memory Commits]: Graph (Neo4j) & Vector (Chroma)
-[Latency]: {latency:.2f}s
-"""
-            else:
-                conclusions = response_data.get("details", {}).get("derived_conclusions", [])
-                reply = f"🔍 经过本体图谱严密推导，得出以下结论：\n"
-                for idx, item in enumerate(conclusions):
-                    reply += f"{idx+1}. `{item}`\n"
-                if not conclusions:
-                    reply += "根据当前知识库，没有获得确信的结论组合。"
-                    
-                trace_log = f"""[Intent Routing]: QUERY
-[Hybrid Retrieval]: Vector Text Match -> Graph Sub-graph extraction
-[Core Reasoner]: Forward/Backward Chaining executed
-[Circuit Breaker]: Checked (Max Depth 10)
-[Confidence System]: Activated
-[Derived Facts Count]: {len(conclusions)}
-[Latency]: {latency:.2f}s
-"""
+
+            trace_logs = response_data.get("trace", [])
+            trace_content = f"[Intent Routing]: {intent}\n"
+            for t in trace_logs:
+                trace_content += f"🔌 [Tool]: {t['tool']} | Args: {t['args']}\n"
+                trace_content += f"   -> [Return]: {t['result']}\n"
+            trace_content += f"[Latency]: {latency:.2f}s\n"
 
             st.markdown(reply)
             with st.expander("🧐 查看认知引擎推理轨迹 (Reasoning Trace)"):
-                st.code(trace_log, language="yaml")
+                st.code(trace_content, language="yaml")
                 
-            st.session_state.messages.append({"role": "assistant", "content": reply, "trace": trace_log})
+            st.session_state.messages.append({"role": "assistant", "content": reply, "trace": trace_content})

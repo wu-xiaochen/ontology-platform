@@ -83,10 +83,16 @@ class KnowledgeExtractor:
                 extraction_result = self._call_mock_llm(text)
             else:
                 try:
+                    import os
                     from openai import OpenAI
-                    client = OpenAI() # expects OPENAI_API_KEY environment variable
+                    
+                    api_key = os.getenv("OPENAI_API_KEY", "sk-zueyelhrtzsngjdnqfnwfbsboockestuzwwhujpqrjmjmxyy")
+                    base_url = os.getenv("OPENAI_BASE_URL", "https://api.siliconflow.cn/v1")
+                    model_id = os.getenv("OPENAI_MODEL", "Pro/MiniMaxAI/MiniMax-M2.5")
+                    
+                    client = OpenAI(api_key=api_key, base_url=base_url)
                     completion = client.beta.chat.completions.parse(
-                        model="gpt-4o-mini",
+                        model=model_id,
                         messages=[
                             {"role": "system", "content": "You are a precise ontological extraction bot. Extract formal RDF triples from unformatted text."},
                             {"role": "user", "content": f"Extract formal triples from: {text}"}
@@ -98,7 +104,7 @@ class KnowledgeExtractor:
                     logger.error("OpenAI package not installed. run `pip install openai`.")
                     return []
                 except Exception as e:
-                    logger.error(f"OpenAI API error: {e}")
+                    logger.error(f"OpenAI (SiliconFlow) API error: {e}")
                     # Fallback to empty if API fails in production
                     return []
 

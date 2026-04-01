@@ -74,7 +74,7 @@ def demo_phase_5_enterprise_features():
     # ---------------------------------------------------------
     print("👉 细节 4: RLHF (Reinforcement Learning from Human Feedback)")
     episodic_memory = EpisodicMemory(db_path="data/enterprise_rlhf.db")
-    task_id = "TASK_888"
+    task_id = f"TASK_{int(time.time())}"
     
     # 存储一个工作记录
     episodic_memory.store_episode({"task_id": task_id, "action": "buy_valve", "cost": 100})

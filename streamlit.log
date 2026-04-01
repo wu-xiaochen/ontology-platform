@@ -3,10 +3,21 @@
 
   Local URL: http://localhost:8501
   Network URL: http://198.18.0.1:8501
-  External URL: http://217.116.174.241:8501
 
 INFO:core.permissions:Initialized PermissionManager with 5 default roles
 INFO:numexpr.utils:NumExpr defaulting to 10 threads.
 INFO:core.reasoner:添加规则: 传递性规则 (builtin:transitivity)
 INFO:core.reasoner:添加规则: 对称性规则 (builtin:symmetry)
 INFO:chromadb.telemetry.product.posthog:Anonymized telemetry enabled. See                     https://docs.trychroma.com/telemetry for more information.
+INFO:agents.orchestrator:Orchestrator received task: 你好...
+INFO:agents.orchestrator:Routing to Perception Layer (Ingestion)...
+INFO:perception.extractor:KnowledgeExtractor 开始提取知识 (长度: 2)
+INFO:perception.extractor:[Mock LLM] Processing text for extraction...
+INFO:perception.extractor:成功提取 0 条结构化事实
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_2822
+INFO:agents.orchestrator:Orchestrator received task: ？...
+INFO:agents.orchestrator:Routing to Perception Layer (Ingestion)...
+INFO:perception.extractor:KnowledgeExtractor 开始提取知识 (长度: 1)
+INFO:perception.extractor:[Mock LLM] Processing text for extraction...
+INFO:perception.extractor:成功提取 0 条结构化事实
+INFO:memory.base:💾 Permanently recorded episode into SQLite: orch_9372
