@@ -15,9 +15,16 @@ st.set_page_config(page_title="Clawra 认知智能体", page_icon="🧠", layout
 def init_orchestrator():
     """全局初始化 Clawra 认知中枢"""
     reasoner = Reasoner()
-    # 预先灌入测试规则和事实以便展示
     reasoner.facts.append(Fact("System", "status", "online", confidence=1.0))
-    semantic_mem = SemanticMemory()
+    
+    # Neo4j 连接凭据（从环境变量读取，默认本地 Docker）
+    neo4j_uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    neo4j_user = os.getenv("NEO4J_USER", "neo4j")
+    neo4j_pass = os.getenv("NEO4J_PASSWORD", "clawra2026")
+    
+    semantic_mem = SemanticMemory(uri=neo4j_uri, user=neo4j_user, password=neo4j_pass)
+    semantic_mem.connect()  # 主动尝试连接 Neo4j
+    
     episodic_mem = EpisodicMemory()
     return CognitiveOrchestrator(reasoner, semantic_mem, episodic_mem)
 
@@ -29,17 +36,94 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "您好！我是 Clawra 企业级认知智能体。您可以向我灌输知识，或者向我提问进行逻辑推导。"}
     ]
 
-# 侧边栏：系统状态监控
+# =========================================
+# 左侧栏：系统状态 + 实时本体图谱
+# =========================================
 with st.sidebar:
-    st.title("🧠 Clawra 神经枢纽监控")
+    st.title("🧠 Clawra 神经枢纽")
     st.markdown("---")
-    st.metric("Neo4j 图谱状态", "Connected" if st.session_state.orchestrator.semantic_memory.is_connected else "Offline (Local Only)")
-    st.metric("ChromaDB 向量条目", "Ready")
-    st.metric("Reasoner 事实容量", len(st.session_state.orchestrator.reasoner.facts))
-    st.markdown("---")
-    st.caption("Module 4: UI Visual Reasoning Trace Dashboard. Powered by Phase 5 Enterprise Arch.")
 
-# 主界面：对话窗口
+    # 引擎状态面板
+    reasoner = st.session_state.orchestrator.reasoner
+    fact_count = len(reasoner.facts)
+    
+    col1, col2 = st.columns(2)
+    col1.metric("Reasoner 事实", fact_count)
+    col2.metric("ChromaDB", "✅ Active")
+
+    neo4j_connected = st.session_state.orchestrator.semantic_memory.is_connected
+    if neo4j_connected:
+        st.success("🟢 Neo4j: Connected")
+        st.link_button("🔗 打开 Neo4j Browser", "http://localhost:7474")
+    else:
+        st.warning("🟡 Neo4j: 未连接 (仅本地推理)")
+    st.markdown("---")
+
+    # ================================
+    # 实时本体知识图谱可视化
+    # ================================
+    st.subheader("🕸️ 本体知识图谱")
+    
+    if fact_count > 0:
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+            import networkx as nx
+
+            G = nx.DiGraph()
+            for fact in reasoner.facts:
+                G.add_node(fact.subject, node_type="entity")
+                G.add_node(fact.object, node_type="entity")
+                G.add_edge(fact.subject, fact.object, label=fact.predicate, weight=fact.confidence)
+
+            fig, ax = plt.subplots(figsize=(5, 4))
+            fig.patch.set_facecolor('#0E1117')
+            ax.set_facecolor('#0E1117')
+
+            pos = nx.spring_layout(G, k=2.5, iterations=50, seed=42)
+            
+            # 节点
+            nx.draw_networkx_nodes(G, pos, ax=ax,
+                node_color='#00D4FF', node_size=700, alpha=0.9, edgecolors='#FFFFFF', linewidths=1.5)
+            # 边
+            nx.draw_networkx_edges(G, pos, ax=ax,
+                edge_color='#FF6B6B', arrows=True, arrowsize=15,
+                width=1.5, alpha=0.7, connectionstyle="arc3,rad=0.1")
+            # 节点标签
+            nx.draw_networkx_labels(G, pos, ax=ax,
+                font_size=7, font_color='white', font_weight='bold')
+            # 边标签
+            edge_labels = nx.get_edge_attributes(G, 'label')
+            nx.draw_networkx_edge_labels(G, pos, edge_labels, ax=ax,
+                font_size=5, font_color='#FFD93D', alpha=0.9)
+
+            ax.set_title(f"Ontology Graph ({G.number_of_nodes()} nodes, {G.number_of_edges()} edges)",
+                         color='white', fontsize=9, pad=10)
+            ax.axis('off')
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close(fig)
+        except ImportError:
+            st.info("请安装 `networkx` 和 `matplotlib` 以启用图谱可视化。")
+    else:
+        st.caption("暂无知识，请向 Agent 灌输领域事实。")
+    
+    # 事实明细表
+    if fact_count > 0:
+        st.markdown("---")
+        st.subheader("📋 事实明细")
+        fact_data = []
+        for f in reasoner.facts:
+            fact_data.append({"主体": f.subject, "谓词": f.predicate, "客体": f.object, "置信": f"{f.confidence:.0%}"})
+        st.dataframe(fact_data, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.caption("Module 4: Visual Reasoning Trace Dashboard")
+
+# =========================================
+# 右侧主界面：对话窗口
+# =========================================
 st.title("💡 Clawra 终端交互面 (Sandbox)")
 
 for msg in st.session_state.messages:
@@ -51,14 +135,12 @@ for msg in st.session_state.messages:
 
 # 用户输入交互
 if prompt := st.chat_input("输入查询意图或业务语料..."):
-    # 显示用户输入
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Clawra 大脑处理
     with st.chat_message("assistant"):
-        with st.spinner("Clawra 混合引掣思考中 (ReAct Agent Loop)..."):
+        with st.spinner("Clawra 混合引擎思考中 (ReAct Agent Loop)..."):
             import asyncio
             start_time = time.time()
             response_data = asyncio.run(st.session_state.orchestrator.execute_task(st.session_state.messages))
@@ -68,10 +150,11 @@ if prompt := st.chat_input("输入查询意图或业务语料..."):
             reply = response_data.get("message", "")
             
             if intent == "INGEST":
-                reply += f"\n\n**抽取出的结构化三元组:**\n"
                 facts = response_data.get("facts", [])
-                for item in facts:
-                    reply += f"- `({item[0]} -> {item[1]} -> {item[2]})`\n"
+                if facts:
+                    reply += f"\n\n**抽取出的结构化三元组:**\n"
+                    for item in facts:
+                        reply += f"- `({item[0]} -> {item[1]} -> {item[2]})`\n"
 
             trace_logs = response_data.get("trace", [])
             trace_content = f"[Intent Routing]: {intent}\n"
@@ -85,3 +168,6 @@ if prompt := st.chat_input("输入查询意图或业务语料..."):
                 st.code(trace_content, language="yaml")
                 
             st.session_state.messages.append({"role": "assistant", "content": reply, "trace": trace_content})
+            
+            # 触发侧边栏图谱刷新
+            st.rerun()
