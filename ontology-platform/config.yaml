@@ -1,0 +1,177 @@
+# Ontology Platform Configuration
+# 本配置文件包含环境、数据库和推理引擎的配置
+# v3.4.0 更新: 添加监控、安全和性能优化配置
+
+# ============================================
+# 1. 环境配置
+# ============================================
+environment:
+  # 运行模式: development | staging | production
+  mode: development
+  
+  # 日志级别: debug | info | warning | error
+  log_level: debug
+  
+  # 服务配置
+  server:
+    host: 0.0.0.0
+    port: 8080
+    timeout: 30
+    workers: 4
+  
+  # 安全配置
+  security:
+    enable_cors: true
+    allowed_origins:
+      - http://localhost:3000
+      - http://localhost:8080
+    api_key_required: false
+    rate_limit_per_minute: 100
+    rate_limit_burst: 20
+
+# ============================================
+# 2. 监控配置
+# ============================================
+monitoring:
+  # Prometheus 指标
+  prometheus:
+    enabled: true
+    scrape_interval: 15s
+  
+  # 健康检查
+  health_check:
+    enabled: true
+    detailed: true
+  
+  # 性能监控
+  performance:
+    enabled: true
+    track_inference_time: true
+    track_cache_hits: true
+  
+  # 日志聚合
+  logging:
+    request_logging: true
+    correlation_id_header: X-Correlation-ID
+    log_request_body: false  # 生产环境设为false
+    log_response_body: false
+
+# ============================================
+# 3. 性能优化配置
+# ============================================
+performance:
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl_seconds: 3600
+    max_size: 1000
+  
+  # 连接池配置
+  connection_pool:
+    min_size: 2
+    max_size: 20
+    checkout_timeout: 30
+  
+  # 查询优化
+  query_optimization:
+    enabled: true
+    query_cache_ttl: 600
+    slow_query_threshold_ms: 1000
+  
+  # 批处理
+  batch_processing:
+    batch_size: 10
+    max_concurrent_batches: 5
+
+# ============================================
+# 4. 数据库配置
+# ============================================
+database:
+  # 数据库类型: sqlite | postgresql | mysql
+  type: sqlite
+  
+  # SQLite 配置
+  sqlite:
+    path: ./data/ontology.db
+    journal_mode: WAL
+    synchronous: NORMAL
+  
+  # PostgreSQL 配置 (如使用)
+  postgresql:
+    host: localhost
+    port: 5432
+    database: ontology_platform
+    username: postgres
+    password: ""
+    pool_size: 10
+    ssl_mode: disable
+  
+  # MySQL 配置 (如使用)
+  mysql:
+    host: localhost
+    port: 3306
+    database: ontology_platform
+    username: root
+    password: ""
+    charset: utf8mb4
+  
+  # 连接池配置
+  connection_pool:
+    min_connections: 2
+    max_connections: 20
+    idle_timeout: 300
+  
+  # 迁移配置
+  migrations:
+    auto_migrate: true
+    migration_path: ./migrations
+
+# ============================================
+# 5. 推理引擎配置
+# ============================================
+inference_engine:
+  # 推理引擎类型: local | openai | ollama | anthropic
+  provider: local
+  
+  # 本地推理配置
+  local:
+    model_path: ./models/ontology-model
+    device: cpu  # cpu | cuda | mps
+    max_batch_size: 8
+    temperature: 0.7
+    top_p: 0.9
+    context_length: 4096
+  
+  # OpenAI 配置 (如使用)
+  openai:
+    api_key: ""
+    model: gpt-4
+    base_url: https://api.openai.com/v1
+    max_tokens: 2048
+    temperature: 0.7
+  
+  # Ollama 配置 (如使用)
+  ollama:
+    base_url: http://localhost:11434
+    model: llama2
+    temperature: 0.7
+    num_ctx: 4096
+  
+  # Anthropic 配置 (如使用)
+  anthropic:
+    api_key: ""
+    model: claude-3-opus
+    max_tokens: 4096
+    temperature: 0.7
+  
+  # 推理缓存配置
+  cache:
+    enabled: true
+    ttl: 3600  # 秒
+    max_size: 1000
+  
+  # 知识图谱配置
+  knowledge_graph:
+    embedding_model: text-embedding-ada-002
+    similarity_threshold: 0.75
+    max_results: 10

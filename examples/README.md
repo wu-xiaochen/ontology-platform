@@ -39,27 +39,37 @@ python examples/hiring_assistant_demo.py
 - 候选人匹配
 - 面试问题生成
 
+### 6. 供应链风险评估
+```bash
+python examples/supply_chain_risk_demo.py
+```
+企业级供应链风控系统，展示：
+- 多维度风险评估（交货、质量、财务）
+- 置信度计算与证据追踪
+- 自动风险等级分类
+- 可解释的推理链输出
+
 ## 高级示例
 
-### 6. Agent 成长演示
+### 7. Agent 成长演示
 ```bash
 python examples/agent_growth_demo.py
 ```
 展示 Agent 如何通过反思和学习不断成长。
 
-### 7. Clawra 全栈演示
+### 8. Clawra 全栈演示
 ```bash
 python examples/clawra_full_stack_demo.py
 ```
 Clawra 系统的全栈功能演示。
 
-### 8. Phase 3 高级功能
+### 9. Phase 3 高级功能
 ```bash
 python examples/phase3_advanced_demo.py
 ```
 Phase 3 的高级功能展示。
 
-### 9. Phase 5 企业级功能
+### 10. Phase 5 企业级功能
 ```bash
 python examples/phase5_enterprise_demo.py
 ```
@@ -99,6 +109,7 @@ export OPENAI_API_KEY="your_api_key"
 | ⭐⭐⭐ | demo_supplier_monitor.py | 业务场景 |
 | ⭐⭐⭐⭐ | hiring_assistant_demo.py | 完整应用 |
 | ⭐⭐⭐⭐⭐ | agent_growth_demo.py | Agent 成长 |
+| ⭐⭐⭐⭐⭐ | supply_chain_risk_demo.py | 企业级供应链风控 |
 
 ## 贡献示例
 

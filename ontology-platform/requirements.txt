@@ -1,0 +1,19 @@
+# Core API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Data & Storage
+redis>=5.0.0
+neo4j>=5.0.0
+pydantic>=2.0.0
+
+# GraphQL (v3.3升级)
+strawberry-graphql>=0.200.0
+
+# Configuration & Logging
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+
+# Utilities
+httpx>=0.25.0
+python-multipart>=0.0.6
