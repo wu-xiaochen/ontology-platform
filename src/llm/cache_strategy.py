@@ -85,29 +85,52 @@ class CacheEntry:
 
 # ==================== Base Cache ====================
 
-class BaseCache(Generic[T]):
-    """Base cache interface"""
+from abc import ABC, abstractmethod
+
+
+class BaseCache(ABC, Generic[T]):
+    """
+    缓存基类接口
     
+    使用抽象基类模式定义缓存的标准接口，强制子类实现核心方法。
+    这种设计确保所有缓存实现都遵循统一的契约，便于替换和扩展。
+    """
+    
+    @abstractmethod
     def get(self, key: str) -> Optional[T]:
-        raise NotImplementedError
+        """根据键获取缓存值，子类必须实现"""
+        pass
     
-    def set(self, key: str, value: T, ttl: float = None, tags: List[str] = None, priority: int = 0):
-        raise NotImplementedError
+    @abstractmethod
+    def set(self, key: str, value: T, ttl: Optional[float] = None, tags: Optional[List[str]] = None, priority: int = 0):
+        """设置缓存值，子类必须实现"""
+        pass
     
+    @abstractmethod
     def delete(self, key: str):
-        raise NotImplementedError
+        """删除指定键的缓存，子类必须实现"""
+        pass
     
+    @abstractmethod
     def clear(self):
-        raise NotImplementedError
+        """清空所有缓存，子类必须实现"""
+        pass
     
+    @abstractmethod
     def stats(self) -> Dict[str, Any]:
-        raise NotImplementedError
+        """获取缓存统计信息，子类必须实现"""
+        pass
 
 
 # ==================== LRU Cache (Enhanced) ====================
 
 class EnhancedLRUCache(BaseCache[T]):
-    """Thread-safe LRU cache with TTL, tags, and priority support"""
+    """
+    增强型 LRU 缓存，支持 TTL、标签和优先级
+    
+    相比基础 LRUCache，增加了优先级支持和定期清理机制，
+    适用于更复杂的缓存场景。
+    """
     
     def __init__(
         self,
@@ -116,32 +139,48 @@ class EnhancedLRUCache(BaseCache[T]):
         enable_stats: bool = True,
         cleanup_interval: float = 60
     ):
+        # 最大缓存容量
         self.max_size = max_size
+        # 默认过期时间（秒）
         self.default_ttl = default_ttl
+        # 使用 OrderedDict 保持访问顺序
         self._cache: OrderedDict = OrderedDict()
+        # 存储每个键的元数据
         self._metadata: Dict[str, CacheEntry] = {}
+        # 线程锁保证并发安全
         self._lock = Lock()
+        # 是否启用统计
         self._enable_stats = enable_stats
         
-        # Statistics
-        self._hits = 0
-        self._misses = 0
-        self._evictions = 0
-        self._expired = 0
+        # 统计指标
+        self._hits = 0  # 命中次数
+        self._misses = 0  # 未命中次数
+        self._evictions = 0  # 淘汰次数
+        self._expired = 0  # 过期清理次数
         
-        # Periodic cleanup
+        # 定期清理机制：记录上次清理时间和间隔
         self._last_cleanup = time.time()
         self._cleanup_interval = cleanup_interval
     
     def _maybe_cleanup(self):
-        """Periodic cleanup of expired entries"""
+        """
+        触发定期清理检查
+        
+        只有当距离上次清理超过指定间隔时才执行，
+        避免每次访问都进行全量扫描，降低性能开销。
+        """
         now = time.time()
         if now - self._last_cleanup > self._cleanup_interval:
             self._cleanup_expired()
             self._last_cleanup = now
     
     def _cleanup_expired(self):
-        """Remove expired entries"""
+        """
+        清理过期条目
+        
+        遍历所有元数据，删除已过期的条目。
+        在数据量大时可能耗时，建议配合 _maybe_cleanup 使用。
+        """
         keys_to_delete = [
             k for k, v in self._metadata.items()
             if v.is_expired()
@@ -153,44 +192,57 @@ class EnhancedLRUCache(BaseCache[T]):
             logger.debug(f"Cleaned up {len(keys_to_delete)} expired entries")
     
     def get(self, key: str) -> Optional[T]:
-        """Get value from cache"""
+        """
+        从缓存获取值
+        
+        先触发定期清理检查，再执行常规获取逻辑。
+        这种设计确保过期数据能被及时清理，避免内存泄漏。
+        """
         with self._lock:
+            # 触发定期清理检查
             self._maybe_cleanup()
             
+            # 键不存在，记录未命中
             if key not in self._cache:
                 self._misses += 1
                 return None
             
             entry = self._metadata[key]
             
-            # Check TTL
+            # 检查 TTL 是否过期
             if entry.is_expired():
                 self._evict(key)
                 self._misses += 1
                 self._expired += 1
                 return None
             
-            # Move to end (most recently used)
+            # 移动到末尾表示最近使用
             self._cache.move_to_end(key)
-            entry.touch()
+            entry.touch()  # 更新访问时间和计数
             
             self._hits += 1
             return entry.value
     
-    def set(self, key: str, value: T, ttl: float = None, tags: List[str] = None, priority: int = 0):
-        """Set value in cache"""
+    def set(self, key: str, value: T, ttl: Optional[float] = None, tags: Optional[List[str]] = None, priority: int = 0):
+        """
+        设置缓存值
+        
+        支持优先级设置，高优先级条目在淘汰时被保留。
+        使用 Optional 类型注解，允许 ttl 和 tags 为 None。
+        """
         with self._lock:
-            # Remove oldest if at capacity (consider priority)
+            # 缓存已满时，按优先级淘汰 LRU 条目
             while len(self._cache) >= self.max_size:
                 self._evict_lru()
             
             now = time.time()
             
-            # Update existing or create new
+            # 如果键已存在，先删除旧值
             if key in self._cache:
                 self._evict(key)
             
             self._cache[key] = value
+            # 创建元数据，包含优先级信息
             self._metadata[key] = CacheEntry(
                 key=key,
                 value=value,
@@ -202,13 +254,19 @@ class EnhancedLRUCache(BaseCache[T]):
             )
     
     def _evict_lru(self):
-        """Evict least recently used item"""
+        """
+        按优先级淘汰 LRU 条目
+        
+        先找出优先级最低的条目，再从中选择最久未访问的淘汰。
+        这种策略确保高优先级数据被保留，低优先级数据优先淘汰。
+        """
         if self._cache:
-            # Find entry with lowest priority, then oldest access
+            # 找出最低优先级
             min_priority = min(v.priority for v in self._metadata.values())
+            # 收集所有最低优先级的候选条目
             candidates = [k for k, v in self._metadata.items() if v.priority == min_priority]
             
-            # Evict oldest accessed
+            # 从候选中选择最久未访问的淘汰
             key = min(candidates, key=lambda k: self._metadata[k].accessed_at)
             self._evict(key)
             self._evictions += 1
@@ -287,7 +345,7 @@ class RedisCache(BaseCache[T]):
     
     def __init__(
         self,
-        host: str = "localhost",
+        host: str = None,  # 从环境变量读取，默认 localhost
         port: int = 6379,
         db: int = 0,
         password: Optional[str] = None,
@@ -295,6 +353,14 @@ class RedisCache(BaseCache[T]):
         default_ttl: float = 3600,
         ssl: bool = False
     ):
+        # 从零硬编码原则：Redis 连接参数从环境变量读取，允许通过配置覆盖
+        if host is None:
+            host = os.getenv("REDIS_HOST", "localhost")
+        port = int(os.getenv("REDIS_PORT", port))
+        db = int(os.getenv("REDIS_DB", db))
+        if password is None:
+            password = os.getenv("REDIS_PASSWORD", None)
+        ssl = os.getenv("REDIS_SSL", str(ssl)).lower() in ("true", "1", "yes")
         if not REDIS_AVAILABLE:
             raise RuntimeError("Redis is not available. Install with: pip install redis")
         
@@ -327,7 +393,14 @@ class RedisCache(BaseCache[T]):
                 return None
             
             self._hits += 1
-            return json.loads(value)
+            try:
+                # 尝试将Redis存储的JSON字符串反序列化为Python对象
+                return json.loads(value)
+            except json.JSONDecodeError as e:
+                # 缓存值不是有效的JSON格式，可能是数据损坏或存储格式不一致
+                logger.error(f"Redis缓存值JSON解析失败，key={key}: {e}")
+                self._misses += 1
+                return None
         except Exception as e:
             logger.error(f"Redis get error: {e}")
             self._misses += 1
@@ -437,11 +510,13 @@ class TwoLevelCache(BaseCache[T]):
         # L2 is optional
         if l2_config and REDIS_AVAILABLE:
             try:
+                # 从零硬编码原则：Redis 连接参数优先从环境变量读取，l2_config 作为覆盖
+                import os
                 self.l2 = RedisCache(
-                    host=l2_config.get("host", "localhost"),
-                    port=l2_config.get("port", 6379),
-                    db=l2_config.get("db", 0),
-                    password=l2_config.get("password"),
+                    host=l2_config.get("host", os.getenv("REDIS_HOST", "localhost")),
+                    port=l2_config.get("port", int(os.getenv("REDIS_PORT", "6379"))),
+                    db=l2_config.get("db", int(os.getenv("REDIS_DB", "0"))),
+                    password=l2_config.get("password") or os.getenv("REDIS_PASSWORD"),
                     key_prefix=l2_config.get("prefix", "ontology:"),
                     default_ttl=l2_ttl
                 )

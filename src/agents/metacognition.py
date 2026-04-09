@@ -1,5 +1,6 @@
 from .base import BaseAgent
 from typing import Any, Dict, List, Optional
+from ..utils.config import get_config
 import logging
 import re
 
@@ -15,10 +16,11 @@ class MetacognitiveAgent(BaseAgent):
     - Self-reflection with reasoning validation
     """
     
-    # Confidence thresholds for knowledge boundary
-    CONFIDENCE_HIGH = 0.85
-    CONFIDENCE_MEDIUM = 0.60
-    CONFIDENCE_LOW = 0.40
+    # 从 ConfigManager 读取置信度阈值，避免硬编码
+    _evolution_cfg = get_config().evolution
+    CONFIDENCE_HIGH = _evolution_cfg.confidence_high
+    CONFIDENCE_MEDIUM = _evolution_cfg.confidence_medium
+    CONFIDENCE_LOW = _evolution_cfg.confidence_low
     
     async def reflect(self, thought: str, reasoning_steps: Optional[List[Dict]] = None) -> Dict[str, Any]:
         """
@@ -34,19 +36,20 @@ class MetacognitiveAgent(BaseAgent):
         logger.info(f"{self.name} reflecting on: {thought[:100]}...")
         
         reflection_result = {
-            "valid": True,
-            "confidence": 0.0,
-            "issues": [],
-            "suggestions": []
+            "valid": True,        # 推理是否有效
+            "confidence": 0.0,    # 推理置信度
+            "issues": [],         # 发现的问题列表
+            "suggestions": []     # 改进建议
         }
         
-        # Check if reasoning has sufficient evidence
+        # 检查推理链是否有充分的证据支撑
         if reasoning_steps:
+            # 计算所有步骤的平均置信度
             total_confidence = sum(step.get("confidence", 0.5) for step in reasoning_steps)
             avg_confidence = total_confidence / len(reasoning_steps) if reasoning_steps else 0.0
             reflection_result["confidence"] = avg_confidence
             
-            # Identify low confidence steps
+            # 识别置信度低于中等阈值的步骤，标记为潜在问题
             low_confidence_steps = [
                 i for i, step in enumerate(reasoning_steps) 
                 if step.get("confidence", 1.0) < self.CONFIDENCE_MEDIUM
@@ -151,18 +154,22 @@ class MetacognitiveAgent(BaseAgent):
             "recommendation": None
         }
         
-        # Determine confidence level
+        # 判定置信度层级，从高到低逐级判断
         if confidence >= self.CONFIDENCE_HIGH:
+            # 高置信度：推理结果可信
             boundary_result["confidence_level"] = "high"
             boundary_result["message"] = "High confidence in the reasoning result"
         elif confidence >= self.CONFIDENCE_MEDIUM:
+            # 中等置信度：建议验证关键事实
             boundary_result["confidence_level"] = "medium"
             boundary_result["message"] = "Moderate confidence - consider verifying critical facts"
-        elif confidence >= self.CONFIDENCE_LOW:
+        elif confidence > self.CONFIDENCE_LOW:
+            # 低置信度：接近知识边界，建议咨询专家
             boundary_result["confidence_level"] = "low"
             boundary_result["message"] = "Low confidence - knowledge boundary approaching"
             boundary_result["recommendation"] = "Consider consulting external sources or human expert"
         else:
+            # 极低置信度 (<= CONFIDENCE_LOW)：超出知识边界，无法给出可靠答案
             boundary_result["within_boundary"] = False
             boundary_result["confidence_level"] = "unknown"
             boundary_result["message"] = "Query appears to be outside knowledge boundary"
@@ -188,16 +195,16 @@ class MetacognitiveAgent(BaseAgent):
             Calibrated confidence score
         """
         if evidence_count == 0:
-            return 0.0
+            return 0.0  # 无证据时置信度为零
         
-        # Evidence scaling: diminishing returns after 5 pieces
+        # 证据数量缩放：超过 5 个证据后收益递减
         evidence_factor = min(evidence_count / 5.0, 1.0)
         
-        # Quality adjustment: high quality evidence boosts confidence
+        # 证据质量调整：高质量证据提升置信度
         quality_factor = evidence_quality
         
-        # Combined confidence with base uncertainty
-        base_uncertainty = 0.1  # Minimum uncertainty
+        # 贝叶斯风格的置信度校准：保留基础不确定性
+        base_uncertainty = 0.1  # 最小不确定性 10%
         calibrated = (evidence_factor * quality_factor * (1 - base_uncertainty)) + base_uncertainty
         
-        return min(calibrated, 0.99)  # Cap at 0.99 to maintain humility
+        return min(calibrated, 0.99)  # 封顶 0.99，保持谦逊原则

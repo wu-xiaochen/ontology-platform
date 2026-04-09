@@ -3,12 +3,12 @@ import os
 import asyncio
 
 # 增加 src 路径
-sys.path.insert(0, os.path.abspath('src'))
+sys.path.insert(0, os.path.abspath('.'))
 
-from core.reasoner import Reasoner
-from memory.base import SemanticMemory, EpisodicMemory
-from agents.orchestrator import CognitiveOrchestrator
-from perception.extractor import KnowledgeExtractor
+from src.core.reasoner import Reasoner
+from src.memory.base import SemanticMemory, EpisodicMemory
+from src.agents.orchestrator import CognitiveOrchestrator
+from src.perception.extractor import KnowledgeExtractor
 
 KNOWLEDGE_TEXT = """
 [此处粘贴用户提供的完整文本...]

@@ -1,135 +1,75 @@
 """
 基础示例 - Hello Ontology Platform
 
-这是 ontology-platform 最简单的入门示例，展示基本使用流程。
-
 运行方式:
-    PYTHONPATH=src python examples/hello_ontology.py
+    cd /path/to/Ontology-platform
+    python examples/hello_ontology.py
 """
-
 import sys
 from pathlib import Path
 
-# 添加 src 到路径
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# 将项目根目录加入 sys.path，使 src. 前缀导入生效
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def main():
-    """演示 ontology-platform 的基础用法"""
-    
     print("=" * 60)
     print("Hello, Ontology Platform!")
     print("=" * 60)
-    
-    # 1. 导入核心组件
-    from ontology_platform import (
-        OntologyLoader,
-        OntologyReasoner,
-        ConfidenceEngine,
-        __version__
-    )
-    
-    print(f"\n✅ 使用版本：v{__version__}")
-    
-    # 2. 创建推理器（使用内置简单本体）
-    print("\n📚 初始化推理器...")
-    reasoner = OntologyReasoner(ontology=None)  # 可以先不加载本体
-    
-    # 3. 学习一些基础知识
-    print("\n🧠 学习基础知识...")
-    
-    knowledge = [
-        {
-            "type": "Concept",
-            "id": "KnowledgeGraph",
-            "properties": {
-                "name": "知识图谱",
-                "description": "一种语义网络，用于表示实体及其关系",
-                "category": "AI"
-            }
-        },
-        {
-            "type": "Concept",
-            "id": "Ontology",
-            "properties": {
-                "name": "本体论",
-                "description": "对概念和关系的正式规范",
-                "category": "AI"
-            }
-        },
-        {
-            "type": "Relationship",
-            "from": "KnowledgeGraph",
-            "to": "Ontology",
-            "relation": "uses",
-            "description": "知识图谱使用本体论来定义结构"
-        }
-    ]
-    
-    for item in knowledge:
-        reasoner.learn(item)
-        print(f"  ✓ 学习了：{item.get('name', item.get('id'))}")
-    
-    # 4. 添加推理规则
-    print("\n📐 添加推理规则...")
-    
-    rule = {
-        "id": "ai_category_rule",
-        "name": "AI 分类规则",
-        "condition": "category == 'AI'",
-        "conclusion": "属于人工智能领域",
-        "confidence": 0.95
-    }
-    
-    reasoner.add_rule(rule)
-    print(f"  ✓ 添加了规则：{rule['name']}")
-    
-    # 5. 执行推理
-    print("\n🔍 执行推理...")
-    
-    result = reasoner.infer(
-        subject="KnowledgeGraph",
-        predicate="category",
-        max_depth=2
-    )
-    
-    print(f"  推理结果：{result.get('conclusion', '无结果')}")
-    print(f"  推理链：{result.get('reasoning_chain', [])}")
-    
-    # 6. 计算置信度
-    print("\n📊 计算置信度...")
-    
-    confidence_engine = ConfidenceEngine()
-    
-    # 模拟推理结果
-    inference_result = {
-        "conclusion": "知识图谱属于人工智能领域",
-        "evidence": ["category == 'AI'"],
-        "chain_length": 1
-    }
-    
-    confidence = confidence_engine.calculate(
-        inference=inference_result,
-        evidence_sources=["rules", "data"]
-    )
-    
-    print(f"  置信度得分：{confidence.score:.2%}")
-    print(f"  证据源：{confidence.evidence_sources}")
-    print(f"  不确定性：{confidence.uncertainty:.2%}")
-    
-    # 7. 查询
-    print("\n❓ 执行查询...")
-    
-    query_result = reasoner.query("知识图谱是什么？")
-    print(f"  回答：{query_result.get('conclusion', '无法回答')}")
-    
+
+    # 1. 知识图谱
+    print("\n📚 Step 1: 知识图谱")
+    from src.core.knowledge_graph import KnowledgeGraph
+    kg = KnowledgeGraph()
+    kg.add_triple("知识图谱", "is_a", "AI技术", confidence=0.95)
+    kg.add_triple("本体论", "is_a", "AI技术", confidence=0.90)
+    kg.add_triple("知识图谱", "uses", "本体论", confidence=0.85)
+    kg.add_triple("本体论", "defines", "概念和关系", confidence=0.92)
+    print("  ✓ 添加了 4 条知识三元组")
+    results = kg.query(subject="知识图谱")
+    print(f"  ✓ 查询「知识图谱」: {len(results)} 条结果")
+    for r in results:
+        print(f"    → {r.subject} --{r.predicate}--> {r.object} (置信度: {r.confidence:.0%})")
+
+    # 2. 推理引擎
+    print("\n🔍 Step 2: 推理引擎")
+    from src.core.reasoner import Reasoner, Fact
+    reasoner = Reasoner()
+    reasoner.add_fact(Fact("知识图谱", "is_a", "AI技术"))
+    reasoner.add_fact(Fact("AI技术", "belongs_to", "计算机科学"))
+    print("  ✓ 添加了 2 条事实")
+    result = reasoner.forward_chain()
+    # InferenceResult 的 conclusions 属性包含推理结论列表
+    print(f"  ✓ 推理得到 {len(result.conclusions)} 条新结论 (总置信度: {result.total_confidence.value:.2f})")
+    for c in result.conclusions:
+        print(f"    → {c}")
+
+    # 3. 置信度计算
+    print("\n📊 Step 3: 置信度计算")
+    from src.eval.confidence import ConfidenceCalculator, Evidence
+    calc = ConfidenceCalculator()
+    score = calc.calculate(evidence=[Evidence(source="ERP系统", reliability=0.95, content="合格")])
+    print(f"  ✓ 单证据源置信度: {score.value:.2%}")
+
+    # 4. 社区检测
+    print("\n🌐 Step 4: 社区检测")
+    communities = kg.detect_communities()
+    print(f"  ✓ 检测到 {len(communities)} 个知识社区")
+
+    # 5. 分页与内存监控
+    print("\n💾 Step 5: 分页与内存监控")
+    page = kg.load_page(offset=0, limit=2)
+    print(f"  ✓ 第一页: {len(page)} 条三元组")
+    mem = kg.get_memory_usage()
+    print(f"  ✓ 三元组数: {mem.get('triple_count', 0)}, 读: {mem.get('read_count', 0)}, 写: {mem.get('write_count', 0)}")
+
     print("\n" + "=" * 60)
     print("✅ 基础示例完成！")
     print("=" * 60)
     print("\n📚 下一步:")
-    print("  - 查看 demo_confidence_reasoning.py 了解更多置信度计算")
-    print("  - 查看 complete_integration_demo.py 了解完整集成")
-    print("  - 查看 API 文档：src/api/README.md")
+    print("  - python examples/demo_confidence_reasoning.py")
+    print("  - python examples/complete_integration_demo.py")
+    print("  - streamlit run examples/clawra_demo.py")
 
 
 if __name__ == "__main__":
@@ -137,7 +77,6 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         print(f"\n❌ 错误：{e}")
-        print("\n请确保:")
-        print("  1. 已安装依赖：pip install -r requirements.txt")
-        print("  2. PYTHONPATH 设置正确：export PYTHONPATH=src:$PYTHONPATH")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)

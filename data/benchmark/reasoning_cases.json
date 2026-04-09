@@ -1,0 +1,91 @@
+[
+  {
+    "id": "RC01",
+    "description": "传递性推理: 调压箱A -> 燃气调压箱 -> 燃气设备",
+    "facts": [
+      {"subject": "调压箱A", "predicate": "is_a", "object": "燃气调压箱", "confidence": 0.95},
+      {"subject": "燃气调压箱", "predicate": "is_a", "object": "燃气设备", "confidence": 0.99}
+    ],
+    "expected_conclusions": [
+      {"subject": "调压箱A", "predicate": "is_a", "object": "燃气设备"}
+    ]
+  },
+  {
+    "id": "RC02",
+    "description": "传递性推理: 患者张三 -> 糖尿病患者 -> 慢性病患者",
+    "facts": [
+      {"subject": "患者张三", "predicate": "is_a", "object": "糖尿病患者", "confidence": 0.95},
+      {"subject": "糖尿病患者", "predicate": "is_a", "object": "慢性病患者", "confidence": 0.99}
+    ],
+    "expected_conclusions": [
+      {"subject": "患者张三", "predicate": "is_a", "object": "慢性病患者"}
+    ]
+  },
+  {
+    "id": "RC03",
+    "description": "三层传递: 调压箱B -> 楼栋调压箱 -> 燃气调压箱 -> 燃气设备",
+    "facts": [
+      {"subject": "调压箱B", "predicate": "is_a", "object": "楼栋调压箱", "confidence": 0.90},
+      {"subject": "楼栋调压箱", "predicate": "is_a", "object": "燃气调压箱", "confidence": 0.95},
+      {"subject": "燃气调压箱", "predicate": "is_a", "object": "燃气设备", "confidence": 0.99}
+    ],
+    "expected_conclusions": [
+      {"subject": "调压箱B", "predicate": "is_a", "object": "燃气调压箱"},
+      {"subject": "调压箱B", "predicate": "is_a", "object": "燃气设备"},
+      {"subject": "楼栋调压箱", "predicate": "is_a", "object": "燃气设备"}
+    ]
+  },
+  {
+    "id": "RC04",
+    "description": "属性继承: 燃气设备需要定期维护",
+    "facts": [
+      {"subject": "调压箱C", "predicate": "is_a", "object": "燃气调压箱", "confidence": 0.90},
+      {"subject": "燃气调压箱", "predicate": "requires", "object": "定期维护", "confidence": 0.85}
+    ],
+    "expected_conclusions": [
+      {"subject": "调压箱C", "predicate": "requires", "object": "定期维护"}
+    ]
+  },
+  {
+    "id": "RC05",
+    "description": "多谓词传递: 供应链关系",
+    "facts": [
+      {"subject": "特瑞斯", "predicate": "supplies", "object": "调压器", "confidence": 0.90},
+      {"subject": "调压器", "predicate": "supplies", "object": "调压箱组装", "confidence": 0.85}
+    ],
+    "expected_conclusions": [
+      {"subject": "特瑞斯", "predicate": "supplies", "object": "调压箱组装"}
+    ]
+  },
+  {
+    "id": "RC06",
+    "description": "无推理: 不同谓词不触发传递",
+    "facts": [
+      {"subject": "设备A", "predicate": "is_a", "object": "调压箱", "confidence": 0.90},
+      {"subject": "设备A", "predicate": "located_in", "object": "上海", "confidence": 0.80}
+    ],
+    "expected_conclusions": []
+  },
+  {
+    "id": "RC07",
+    "description": "药物传递: 胰岛素 -> 药物 -> 治疗手段",
+    "facts": [
+      {"subject": "胰岛素", "predicate": "is_a", "object": "药物", "confidence": 0.99},
+      {"subject": "药物", "predicate": "is_a", "object": "治疗手段", "confidence": 0.95}
+    ],
+    "expected_conclusions": [
+      {"subject": "胰岛素", "predicate": "is_a", "object": "治疗手段"}
+    ]
+  },
+  {
+    "id": "RC08",
+    "description": "多实体同谓词",
+    "facts": [
+      {"subject": "张三", "predicate": "works_at", "object": "公司A", "confidence": 0.90},
+      {"subject": "公司A", "predicate": "works_at", "object": "集团B", "confidence": 0.85}
+    ],
+    "expected_conclusions": [
+      {"subject": "张三", "predicate": "works_at", "object": "集团B"}
+    ]
+  }
+]

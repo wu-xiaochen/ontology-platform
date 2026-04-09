@@ -4,19 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clawra"
-version = "1.0.0"
+version = "4.0.0-alpha.1"
 description = "Clawra: Cognitive Logical Agent with Reasoning & Autonomy"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Wu Xiaochen", email = "wu@clawra.ai"}
 ]
 keywords = ["AI", "agents", "ontology", "reasoning", "metacognition", "knowledge-graph", "LLM"]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -28,6 +28,7 @@ requires-python = ">=3.10"
 dependencies = [
     "rdflib>=7.0.0",
     "owlrl>=6.0.0",
+    "owlready2>=0.45",
     "networkx>=3.1",
     "fastapi>=0.109.0",
     "uvicorn>=0.27.0",

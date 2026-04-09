@@ -8,10 +8,10 @@ from pydantic import BaseModel, Field
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from core.reasoner import Reasoner, Fact, Rule, RuleType
-from memory.base import SemanticMemory, EpisodicMemory
-from agents.orchestrator import CognitiveOrchestrator
-from core.ontology.rule_engine import RuleEngine, OntologyRule
+from ...core.reasoner import Reasoner, Fact, Rule, RuleType
+from ...memory.base import SemanticMemory, EpisodicMemory
+from ...agents.orchestrator import CognitiveOrchestrator
+from ...core.ontology.rule_engine import RuleEngine, OntologyRule
 
 logger = logging.getLogger(__name__)
 

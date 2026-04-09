@@ -2,13 +2,14 @@
 
 __version__ = "0.9.0-alpha"
 
-from ontology_platform.loader import OntologyLoader
-from ontology_platform.reasoner import OntologyReasoner
-from ontology_platform.confidence import ConfidenceEngine
+# 从现有模块导入核心组件
+from src.core.loader import OntologyLoader
+from src.ontology.reasoner import OntologyReasoner
+from src.eval.confidence import ConfidenceCalculator
 
 __all__ = [
     "OntologyLoader",
     "OntologyReasoner", 
-    "ConfidenceEngine",
+    "ConfidenceCalculator",
     "__version__",
 ]

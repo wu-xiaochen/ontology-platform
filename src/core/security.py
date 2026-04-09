@@ -329,12 +329,45 @@ def require_api_key():
             
             api_key = kwargs.get("x_api_key") or kwargs.get("api_key")
             
+            # 如果kwargs中没有API key，尝试从函数参数中查找请求对象
             if not api_key:
-                # Try to get from header
-                # Note: FastAPI dependencies handle this differently
-                pass
+                # 在args或kwargs中查找可能的请求对象（支持FastAPI/Flask/Starlette等框架）
+                request = None
+                for arg in args:
+                    if hasattr(arg, "headers"):
+                        request = arg
+                        break
+                if not request:
+                    for arg in kwargs.values():
+                        if hasattr(arg, "headers"):
+                            request = arg
+                            break
+                
+                # 从请求头中提取API key（支持多种常见的header名称）
+                if request and hasattr(request, "headers"):
+                    headers = request.headers
+                    # 按优先级尝试不同的header名称获取API key
+                    api_key = (
+                        headers.get("x-api-key") or
+                        headers.get("X-API-Key") or
+                        headers.get("Authorization", "").replace("Bearer ", "") or
+                        headers.get("api-key")
+                    )
             
-            # Validation happens in middleware
+            # 如果仍未获取到API key，记录警告并拒绝访问
+            if not api_key:
+                logger.warning("API请求缺少必要的API key认证")
+                raise PermissionError("API key is required. Please provide a valid API key via X-API-Key header or Authorization header.")
+            
+            # 验证API key的有效性
+            key_data = api_key_manager.validate_key(api_key)
+            if not key_data:
+                logger.warning(f"无效的API key尝试访问: {api_key[:10]}...")
+                raise PermissionError("Invalid or expired API key.")
+            
+            # 将验证后的用户信息注入kwargs，供被装饰函数使用
+            kwargs["_api_key_data"] = key_data
+            
             return await func(*args, **kwargs)
         return wrapper
     return decorator

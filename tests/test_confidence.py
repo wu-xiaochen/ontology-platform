@@ -5,7 +5,7 @@
 import sys
 sys.path.insert(0, 'src')
 
-from eval.confidence import Evidence, ConfidenceResult, ConfidenceCalculator
+from src.eval.confidence import Evidence, ConfidenceResult, ConfidenceCalculator
 
 
 def test_evidence_creation():

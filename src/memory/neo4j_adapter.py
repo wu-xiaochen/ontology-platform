@@ -11,12 +11,31 @@ Neo4j客户端 (Neo4j Client)
 """
 
 import logging
-from typing import Any, Optional, Dict, List, Set
+import time
+import os
+import hashlib  # 导入 hashlib 用于生成模式ID的MD5哈希
+from typing import Any, Optional, Dict, List, Set, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from contextlib import contextmanager
 from collections import defaultdict
+import threading
+
+# ─────────────────────────────────────────────
+# 配置常量（从环境变量读取，避免硬编码）
+# ─────────────────────────────────────────────
+
+# 连接重试次数
+MAX_RETRIES = int(os.getenv("NEO4J_MAX_RETRIES", "3"))
+# 重试间隔（秒）
+RETRY_DELAY = float(os.getenv("NEO4J_RETRY_DELAY", "1.0"))
+# 连接超时（秒）
+CONNECTION_TIMEOUT = float(os.getenv("NEO4J_CONNECTION_TIMEOUT", "30.0"))
+# 最大连接池大小
+MAX_POOL_SIZE = int(os.getenv("NEO4J_MAX_POOL_SIZE", "20"))
+# 查询超时（秒）
+QUERY_TIMEOUT = float(os.getenv("NEO4J_QUERY_TIMEOUT", "60.0"))
 
 # Neo4j驱动（可选安装）
 try:
@@ -127,11 +146,22 @@ class InferencePath:
         }
 
 
-class Neo4jClient:
+# 保持向后兼容 - Neo4jClient 是 Neo4jMemory 的别名
+# 实际的 Neo4jMemory 类定义在下面
+
+class Neo4jMemory:
     """
     Neo4j图数据库客户端
     
-    实现本体知识的图存储和查询，支持推理链追溯
+    实现本体知识的图存储和查询，支持推理链追溯。
+    当 Neo4j 不可用时，自动降级到内存存储模式。
+    
+    特性:
+    - 连接池管理
+    - 自动重连机制
+    - 事务支持
+    - 推理链追溯
+    - 内存降级模式
     
     示例:
         client = Neo4jClient("bolt://localhost:7687", "neo4j", "password")
@@ -147,18 +177,29 @@ class Neo4jClient:
         paths = client.trace_inference("Alice", "Bob")
     """
     
-    def __init__(self, uri: str = "bolt://localhost:7687",
-                 user: str = "neo4j", password: str = "neo4j",
-                 database: str = "neo4j"):
+    def __init__(self, uri: str = None,
+                 user: str = None, password: str = None,
+                 database: str = None,
+                 auto_connect: bool = False):
         """
         初始化Neo4j客户端
         
         Args:
-            uri: Neo4j连接URI
-            user: 用户名
-            password: 密码
-            database: 数据库名
+            uri: Neo4j连接URI（默认从 ConfigManager 读取）
+            user: 用户名（默认从 ConfigManager 读取）
+            password: 密码（默认从 ConfigManager 读取）
+            database: 数据库名（默认从 ConfigManager 读取）
+            auto_connect: 是否自动连接（默认 False，延迟连接）
         """
+        # 从统一配置管理器获取 Neo4j 连接参数，消除硬编码
+        if uri is None or user is None or password is None or database is None:
+            from ..utils.config import get_config
+            _cfg = get_config().database
+            uri = uri or _cfg.neo4j_uri
+            user = user or _cfg.neo4j_user
+            password = password or _cfg.neo4j_password
+            database = database or "neo4j"  # 数据库名默认 neo4j
+        
         self.uri = uri
         self.user = user
         self.password = password
@@ -166,44 +207,102 @@ class Neo4jClient:
         self.driver: Optional[Driver] = None
         self._connected = False
         
-        # 索引缓存
+        # 连接池和重连相关属性
+        self._connection_attempts = 0  # 连接尝试次数
+        self._last_connection_time: float = 0  # 上次连接时间戳
+        self._lock = threading.Lock()  # 线程锁，确保线程安全
+        
+        # 降级模式标记
+        self._degraded = False
+        
+        # 索引缓存（用于内存模式和缓存 Neo4j 查询结果）
         self._node_index: Dict[str, GraphNode] = {}
         self._relationship_index: Dict[str, GraphRelationship] = {}
+        
+        # 内存模式下的实体和关系统计
+        self._memory_node_count = 0
+        self._memory_rel_count = 0
         
         # v3.3新增：推理缓存
         self._inference_cache: Dict[str, List[InferencePath]] = defaultdict(list)
         
         if not NEO4J_AVAILABLE:
-            logger.warning("Neo4j driver not available. Using in-memory mode.")
+            logger.warning("⚠️ Neo4j driver 未安装。使用内存降级模式。请运行: pip install neo4j")
+            self._degraded = True
+        elif auto_connect:
+            # 自动连接模式
+            self.connect()
     
     def connect(self) -> bool:
-        """建立连接"""
+        """
+        建立连接（带重试机制）
+            
+        尝试多次连接 Neo4j，失败后降级到内存模式。
+        使用连接池配置优化性能。
+            
+        Returns:
+            是否成功连接（或降级成功）
+        """
         if not NEO4J_AVAILABLE:
-            logger.error("Neo4j driver not installed")
-            return False
-        
-        try:
-            self.driver = GraphDatabase.driver(
-                self.uri,
-                auth=(self.user, self.password)
-            )
-            # 测试连接
-            with self.driver.session(database=self.database) as session:
-                session.run("RETURN 1")
-            self._connected = True
-            logger.info(f"Connected to Neo4j: {self.uri}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to connect to Neo4j: {e}")
-            self._connected = False
+            logger.error("Neo4j driver 未安装")
+            self._degraded = True
+            logger.warning("⚠️ 降级到内存存储模式")
+            return True  # 降级模式也返回 True，确保系统可用
+            
+        # 使用线程锁确保连接过程线程安全
+        with self._lock:
+            # 重试连接逻辑
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    self._connection_attempts = attempt
+                    self._last_connection_time = time.time()
+                        
+                    # 创建带连接池配置的驱动
+                    self.driver = GraphDatabase.driver(
+                        self.uri,
+                        auth=(self.user, self.password),
+                        max_connection_pool_size=MAX_POOL_SIZE,
+                        connection_timeout=CONNECTION_TIMEOUT,
+                        max_transaction_retry_time=30.0
+                    )
+                        
+                    # 测试连接有效性
+                    with self.driver.session(database=self.database) as session:
+                        session.run("RETURN 1").consume()  # 确保查询完成
+                        
+                    self._connected = True
+                    self._degraded = False
+                    logger.info(f"✅ 已连接到 Neo4j: {self.uri} (尝试 {attempt} 次)")
+                    return True
+                        
+                except Exception as e:
+                    logger.warning(f"⚠️ Neo4j 连接失败 (尝试 {attempt}/{MAX_RETRIES}): {e}")
+                        
+                    # 最后一次重试失败后降级
+                    if attempt == MAX_RETRIES:
+                        logger.error(f"❌ Neo4j 连接失败，已达到最大重试次数")
+                        self._connected = False
+                        self._degraded = True
+                        self.driver = None
+                        logger.warning("⚠️ 降级到内存存储模式 - 数据不会持久化")
+                        return True  # 降级模式返回 True，确保系统可用
+                        
+                    # 等待后重试
+                    time.sleep(RETRY_DELAY * attempt)  # 指数退避
+                
             return False
     
     def close(self):
-        """关闭连接"""
+        """关闭连接并清理资源"""
         if self.driver:
-            self.driver.close()
-            self._connected = False
-            logger.info("Closed Neo4j connection")
+            try:
+                self.driver.close()
+            except Exception as e:
+                logger.warning(f"关闭 Neo4j 连接时出错: {e}")
+            finally:
+                self.driver = None
+                self._connected = False
+        logger.info("Neo4j 连接已关闭")
     
     @contextmanager
     def session(self):
@@ -216,6 +315,38 @@ class Neo4jClient:
     def is_connected(self) -> bool:
         """检查连接状态"""
         return self._connected
+    
+    @property
+    def is_degraded(self) -> bool:
+        """
+        返回是否处于降级模式
+        
+        当 Neo4j 不可用时，系统会降级到内存存储模式。
+        降级模式下数据不会持久化。
+        """
+        return self._degraded
+    
+    def reconnect(self) -> bool:
+        """
+        尝试重新连接 Neo4j
+        
+        用于从临时网络故障中恢复。
+        如果当前已连接，会先断开再重连。
+        
+        Returns:
+            是否重新连接成功
+        """
+        # 先关闭现有连接
+        if self.driver:
+            try:
+                self.driver.close()
+            except Exception:
+                pass
+            self.driver = None
+            self._connected = False
+        
+        # 重新连接
+        return self.connect()
     
     # ==================== 实体CRUD ====================
     
@@ -867,24 +998,250 @@ class Neo4jClient:
         )
     
     def get_stats(self) -> Dict:
-        """获取图统计信息"""
-        if not self._connected:
+        """
+        获取图统计信息
+            
+        返回节点数、关系数和运行模式。
+        在降级模式下返回内存存储的统计信息。
+        """
+        if not self._connected or self._degraded:
             return {
                 "nodes": len(self._node_index),
                 "relationships": len(self._relationship_index),
-                "mode": "memory"
+                "mode": "memory_fallback",
+                "is_degraded": True
+            }
+    
+        try:
+            with self.session() as session:
+                node_count = session.run("MATCH (n) RETURN count(n) as c").single()["c"]
+                rel_count = session.run("MATCH ()-[r]->() RETURN count(r) as c").single()["c"]
+                    
+                return {
+                    "nodes": node_count,
+                    "relationships": rel_count,
+                    "mode": "neo4j",
+                    "uri": self.uri,
+                    "is_degraded": False
+                }
+        except Exception as e:
+            logger.warning(f"获取 Neo4j 统计信息失败: {e}")
+            return {
+                "nodes": len(self._node_index),
+                "relationships": len(self._relationship_index),
+                "mode": "memory_fallback",
+                "is_degraded": True,
+                "error": str(e)
             }
         
-        with self.session() as session:
-            node_count = session.run("MATCH (n) RETURN count(n) as c").single()["c"]
-            rel_count = session.run("MATCH ()-[r]->() RETURN count(r) as c").single()["c"]
+    # ==================== Pattern CRUD ====================
+        
+    def store_pattern(self, pattern: Dict[str, Any]) -> Optional[str]:
+        """
+        存储学习到的模式到图数据库
             
+        将模式转换为图节点存储，支持后续检索和关联。
+            
+        Args:
+            pattern: 模式字典，包含 id、name、description 等字段
+                
+        Returns:
+            存储的节点 ID
+        """
+        pattern_id = pattern.get("id") or f"pattern_{hashlib.md5(str(pattern).encode()).hexdigest()[:12]}"
+        pattern_name = pattern.get("name", "Unnamed")
+        pattern_desc = pattern.get("description", "")
+        pattern_type = pattern.get("logic_type", "unknown")
+        pattern_domain = pattern.get("domain", "general")
+        confidence = pattern.get("confidence", 1.0)
+            
+        # 构建节点属性
+        props = {
+            "name": pattern_name,
+            "description": pattern_desc,
+            "logic_type": pattern_type,
+            "domain": pattern_domain,
+            "confidence": confidence,
+            "source": pattern.get("source", "learned"),
+            "created_at": datetime.now().isoformat()
+        }
+            
+        if self._connected and not self._degraded:
+            try:
+                with self.session() as session:
+                    query = """
+                    MERGE (p:Pattern {id: $pattern_id})
+                    SET p += $props
+                    RETURN p.id as id
+                    """
+                    result = session.run(query, pattern_id=pattern_id, props=props)
+                    record = result.single()
+                    if record:
+                        logger.info(f"已存储模式到 Neo4j: {pattern_id}")
+                        return record["id"]
+            except Exception as e:
+                logger.error(f"存储模式到 Neo4j 失败: {e}")
+        else:
+            # 内存模式：存储到缓存
+            node = GraphNode(
+                id=pattern_id,
+                labels=["Pattern"],
+                properties=props,
+                confidence=confidence,
+                source=props["source"]
+            )
+            self._node_index[pattern_id] = node
+            logger.info(f"已存储模式到内存: {pattern_id}")
+            return pattern_id
+            
+        return None
+        
+        
+    def get_pattern_by_id(self, pattern_id: str) -> Optional[Dict[str, Any]]:
+        """
+        根据 ID 获取模式
+            
+        从图数据库或内存存储中检索模式。
+            
+        Args:
+            pattern_id: 模式 ID
+                
+        Returns:
+            模式字典，不存在则返回 None
+        """
+        # 先检查内存缓存
+        if pattern_id in self._node_index:
+            node = self._node_index[pattern_id]
             return {
-                "nodes": node_count,
-                "relationships": rel_count,
-                "mode": "neo4j",
-                "uri": self.uri
+                "id": node.id,
+                "name": node.properties.get("name", ""),
+                "description": node.properties.get("description", ""),
+                "logic_type": node.properties.get("logic_type", "unknown"),
+                "domain": node.properties.get("domain", "general"),
+                "confidence": node.confidence,
+                "source": node.source
             }
+            
+        # Neo4j 模式下查询图数据库
+        if self._connected and not self._degraded:
+            try:
+                with self.session() as session:
+                    query = "MATCH (p:Pattern {id: $pattern_id}) RETURN p"
+                    result = session.run(query, pattern_id=pattern_id)
+                    record = result.single()
+                    if record:
+                        node = self._record_to_node(record["p"])
+                        # 缓存到内存
+                        self._node_index[pattern_id] = node
+                        return {
+                            "id": node.id,
+                            "name": node.properties.get("name", ""),
+                            "description": node.properties.get("description", ""),
+                            "logic_type": node.properties.get("logic_type", "unknown"),
+                            "domain": node.properties.get("domain", "general"),
+                            "confidence": node.confidence,
+                            "source": node.source
+                        }
+            except Exception as e:
+                logger.error(f"从 Neo4j 获取模式失败: {e}")
+            
+        return None
+        
+        
+    def delete_pattern(self, pattern_id: str) -> bool:
+        """
+        删除模式节点
+            
+        Args:
+            pattern_id: 模式 ID
+                
+        Returns:
+            是否删除成功
+        """
+        # 从内存缓存中删除
+        if pattern_id in self._node_index:
+            del self._node_index[pattern_id]
+            
+        # 从图数据库中删除
+        if self._connected and not self._degraded:
+            try:
+                with self.session() as session:
+                    query = "MATCH (p:Pattern {id: $pattern_id}) DETACH DELETE p"
+                    session.run(query, pattern_id=pattern_id)
+                    logger.info(f"已从 Neo4j 删除模式: {pattern_id}")
+                    return True
+            except Exception as e:
+                logger.error(f"从 Neo4j 删除模式失败: {e}")
+                return False
+            
+        return True  # 内存模式总是成功
+        
+        
+    def list_patterns(self, domain: str = None, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        列出所有模式（支持按领域过滤）
+            
+        Args:
+            domain: 领域过滤（可选）
+            limit: 返回数量限制
+                
+        Returns:
+            模式列表
+        """
+        patterns = []
+            
+        if self._connected and not self._degraded:
+            try:
+                with self.session() as session:
+                    if domain:
+                        query = """
+                        MATCH (p:Pattern)
+                        WHERE p.domain = $domain
+                        RETURN p
+                        ORDER BY p.confidence DESC
+                        LIMIT $limit
+                        """
+                        result = session.run(query, domain=domain, limit=limit)
+                    else:
+                        query = """
+                        MATCH (p:Pattern)
+                        RETURN p
+                        ORDER BY p.confidence DESC
+                        LIMIT $limit
+                        """
+                        result = session.run(query, limit=limit)
+                        
+                    for record in result:
+                        node = self._record_to_node(record["p"])
+                        patterns.append({
+                            "id": node.id,
+                            "name": node.properties.get("name", ""),
+                            "description": node.properties.get("description", ""),
+                            "logic_type": node.properties.get("logic_type", "unknown"),
+                            "domain": node.properties.get("domain", "general"),
+                            "confidence": node.confidence
+                        })
+            except Exception as e:
+                logger.error(f"列出模式失败: {e}")
+        else:
+            # 内存模式：从缓存中过滤
+            for node_id, node in self._node_index.items():
+                if "Pattern" in node.labels or node_id.startswith("pattern_"):
+                    if domain and node.properties.get("domain") != domain:
+                        continue
+                    patterns.append({
+                        "id": node.id,
+                        "name": node.properties.get("name", ""),
+                        "description": node.properties.get("description", ""),
+                        "logic_type": node.properties.get("logic_type", "unknown"),
+                        "domain": node.properties.get("domain", "general"),
+                        "confidence": node.confidence
+                    })
+            patterns.sort(key=lambda x: x["confidence"], reverse=True)
+            patterns = patterns[:limit]
+            
+            
+        return patterns
     
     # ==================== 事务支持 ====================
     
@@ -892,49 +1249,151 @@ class Neo4jClient:
         """
         执行事务操作
         
+        在 Neo4j 中执行原子性事务，确保所有操作要么全部成功，要么全部回滚。
+        支持的操作类型：create_entity, create_relationship, update_entity, delete_entity。
+        
         Args:
-            operations: 操作列表 [{"operation": "create_entity", "params": {...}}]
+            operations: 操作列表，每个操作包含 type 和 params
+                       示例: [{"operation": "create_entity", "params": {"name": "Alice", "label": "Person"}}]
         
         Returns:
-            是否成功
+            事务是否成功执行
         """
         if not self._connected:
             logger.warning("Cannot execute transaction in memory mode")
             return False
         
-        def work(tx: Transaction):
+        if not operations:
+            logger.warning("Empty operations list, nothing to execute")
+            return True
+        
+        def work(tx: Transaction) -> bool:
+            """事务工作函数，在 Neo4j 会话中执行所有操作"""
             for op in operations:
                 op_type = op.get("operation")
-
+                params = op.get("params", {})
+                
                 if op_type == "create_entity":
-                    # 创建实体
-                    pass
+                    # 创建实体：使用 MERGE 确保幂等性
+                    name = params.get("name")
+                    label = params.get("label", "Entity")
+                    props = params.get("properties", {})
+                    confidence = params.get("confidence", 1.0)
+                    source = params.get("source", "transaction")
+                    
+                    query = f"""
+                    MERGE (n:{label} {{name: $name}})
+                    SET n += $props
+                    SET n.confidence = $confidence
+                    SET n.source = $source
+                    SET n.updated_at = datetime()
+                    RETURN n
+                    """
+                    tx.run(query, name=name, props=props, confidence=confidence, source=source)
+                    
                 elif op_type == "create_relationship":
-                    # 创建关系
-                    pass
+                    # 创建关系：先确保两端节点存在，再创建关系
+                    start_name = params.get("start_name")
+                    end_name = params.get("end_name")
+                    rel_type = self._sanitize_rel_type(params.get("rel_type", "RELATED_TO"))
+                    props = params.get("properties", {})
+                    confidence = params.get("confidence", 1.0)
+                    source = params.get("source", "transaction")
+                    
+                    query = f"""
+                    MERGE (a:Entity {{name: $start_name}})
+                    MERGE (b:Entity {{name: $end_name}})
+                    CREATE (a)-[r:{rel_type}]->(b)
+                    SET r += $props
+                    SET r.confidence = $confidence
+                    SET r.source = $source
+                    SET r.created_at = datetime()
+                    RETURN r
+                    """
+                    tx.run(query, start_name=start_name, end_name=end_name, 
+                           props=props, confidence=confidence, source=source)
+                    
+                elif op_type == "update_entity":
+                    # 更新实体属性
+                    name = params.get("name")
+                    props = params.get("properties", {})
+                    
+                    query = """
+                    MATCH (n {name: $name})
+                    SET n += $props
+                    SET n.updated_at = datetime()
+                    RETURN n
+                    """
+                    tx.run(query, name=name, props=props)
+                    
+                elif op_type == "delete_entity":
+                    # 删除实体及其关系
+                    name = params.get("name")
+                    query = """
+                    MATCH (n {name: $name})
+                    DETACH DELETE n
+                    """
+                    tx.run(query, name=name)
+                    
+                elif op_type == "delete_relationship":
+                    # 删除关系
+                    start_name = params.get("start_name")
+                    end_name = params.get("end_name")
+                    rel_type = params.get("rel_type")
+                    
+                    if rel_type:
+                        query = f"""
+                        MATCH (a {{name: $start_name}})-[r:{rel_type}]->(b {{name: $end_name}})
+                        DELETE r
+                        """
+                    else:
+                        query = """
+                        MATCH (a {name: $start_name})-[r]->(b {name: $end_name})
+                        DELETE r
+                        """
+                    tx.run(query, start_name=start_name, end_name=end_name)
+                    
+                else:
+                    logger.warning(f"Unknown operation type: {op_type}")
+            
+            return True
         
-        with self.session() as session:
-            session.execute_write(work)
-        
-        return True
+        try:
+            with self.session() as session:
+                session.execute_write(work)
+            logger.info(f"Transaction executed successfully with {len(operations)} operations")
+            return True
+        except Exception as e:
+            logger.error(f"Transaction failed: {e}")
+            return False
 
 
 # ==================== 便捷函数 ====================
 
-def create_neo4j_client(uri: str = "bolt://localhost:7687",
-                         user: str = "neo4j",
-                         password: str = "neo4j") -> Neo4jClient:
+# 定义别名（必须在类定义之后）
+Neo4jClient = Neo4jMemory
+
+def create_neo4j_client(uri: str = None,
+                         user: str = None,
+                         password: str = None) -> Neo4jClient:
     """
     创建Neo4j客户端
     
     Args:
-        uri: 连接URI
-        user: 用户名
-        password: 密码
+        uri: 连接URI（默认从 ConfigManager 读取）
+        user: 用户名（默认从 ConfigManager 读取）
+        password: 密码（默认从 ConfigManager 读取）
     
     Returns:
         Neo4jClient实例
     """
+    # 从统一配置管理器获取 Neo4j 连接参数，消除硬编码
+    if uri is None or user is None or password is None:
+        from ..utils.config import get_config
+        _cfg = get_config().database
+        uri = uri or _cfg.neo4j_uri
+        user = user or _cfg.neo4j_user
+        password = password or _cfg.neo4j_password
     return Neo4jClient(uri, user, password)
 
 

@@ -4,10 +4,14 @@
 """
 
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Any, Optional
 from dataclasses import dataclass, field
+
+# 初始化模块级日志记录器，用于记录本体加载过程中的异常和关键事件
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -64,17 +68,27 @@ class StreamingOntologyLoader:
         # 对于大规模本体，推荐使用 JSONL 格式 (每行一个 JSON 对象)
         with open(self.file_path, 'r', encoding='utf-8') as f:
             if self.file_path.suffix == '.jsonl':
-                for line in f:
+                for line_num, line in enumerate(f, start=1):
                     line = line.strip()
                     if not line:
                         continue
-                    item = json.loads(line)
+                    try:
+                        # 解析JSONL中的每一行，捕获可能的JSON格式错误
+                        item = json.loads(line)
+                    except (json.JSONDecodeError, ValueError) as e:
+                        # JSON解析失败时记录警告并跳过该行，避免整个加载过程中断
+                        logger.warning(f"JSONL第{line_num}行解析失败，跳过: {e}")
+                        continue
                     etype, parsed = self._parse_item(item)
                     if entity_type == "all" or etype == entity_type.rstrip('s'):
                         yield etype, parsed
             else:
                 # 简单实现：对于标准 JSON，依然采用一次性加载，或者提示使用 JSONL
-                data = json.load(f)
+                try:
+                    data = json.load(f)
+                except (json.JSONDecodeError, ValueError) as e:
+                    # 整个JSON文件解析失败，抛出更详细的错误信息帮助定位问题
+                    raise ValueError(f"JSON文件解析失败 '{self.file_path}': {e}") from e
                 self.prefixes = data.get('prefixes', {})
                 
                 if entity_type in ["classes", "all"]:
@@ -225,9 +239,158 @@ class OntologyLoader:
         return self
     
     def _load_rdfxml(self, path: Path) -> 'OntologyLoader':
-        """加载 RDF/XML 格式本体 (占位实现)"""
-        # 实际项目中可使用 rdflib 库
-        raise NotImplementedError("RDF/XML 格式加载需要 rdflib 库")
+        """
+        加载 RDF/XML 格式本体
+        
+        使用 Python 内置的 xml.etree.ElementTree 解析 RDF/XML 格式文件，
+        避免引入外部依赖库。支持解析类定义、属性定义和实例声明。
+        
+        Args:
+            path: RDF/XML 文件路径
+            
+        Returns:
+            加载后的 OntologyLoader 实例
+            
+        Raises:
+            FileNotFoundError: 文件不存在时抛出
+            ValueError: 文件格式错误时抛出
+        """
+        import xml.etree.ElementTree as ET
+        import logging
+        
+        # 检查文件是否存在，避免后续操作失败
+        if not path.exists():
+            raise FileNotFoundError(f"RDF/XML 文件不存在: {path}")
+        
+        # 定义 RDF 和 RDFS 命名空间，用于解析 XML 元素
+        # 使用标准 W3C 命名空间 URI，确保兼容性
+        namespaces = {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+            'owl': 'http://www.w3.org/2002/07/owl#'
+        }
+        
+        try:
+            # 解析 XML 文件，获取根元素
+            tree = ET.parse(path)
+            root = tree.getroot()
+        except ET.ParseError as e:
+            # XML 格式错误时提供清晰的错误信息
+            raise ValueError(f"RDF/XML 文件格式错误: {e}")
+        
+        # 从根元素提取文件中定义的所有命名空间
+        # 这允许处理使用自定义命名空间的本体文件
+        for prefix, uri in root.attrib.items():
+            if prefix.startswith('{'):
+                continue
+            if prefix.startswith('xmlns:'):
+                ns_prefix = prefix[6:]  # 去掉 'xmlns:' 前缀
+                self.prefixes[ns_prefix] = uri
+        
+        # 遍历所有 RDF Description 元素，解析本体内容
+        # RDF/XML 使用 Description 元素描述资源
+        for description in root.findall('.//rdf:Description', namespaces):
+            # 获取资源的 URI，这是资源的唯一标识
+            about = description.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about')
+            if not about:
+                # 跳过没有 URI 的匿名资源（blank nodes）
+                continue
+            
+            # 解析类定义：检查是否为 rdfs:Class 或 owl:Class
+            # 这是本体中类的标准声明方式
+            type_elem = description.find('rdf:type', namespaces)
+            if type_elem is not None:
+                type_uri = type_elem.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                if type_uri in [
+                    'http://www.w3.org/2000/01/rdf-schema#Class',
+                    'http://www.w3.org/2002/07/owl#Class'
+                ]:
+                    # 提取类标签，优先使用 rdfs:label，否则从 URI 生成
+                    label_elem = description.find('rdfs:label', namespaces)
+                    label = label_elem.text if label_elem is not None else about.split('#')[-1].split('/')[-1]
+                    
+                    # 提取父类信息，支持 rdfs:subClassOf 关系
+                    super_classes = []
+                    for sub_class in description.findall('rdfs:subClassOf', namespaces):
+                        parent = sub_class.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                        if parent:
+                            super_classes.append(parent)
+                    
+                    # 创建类对象并注册到加载器中
+                    self.classes[about] = OntologyClass(
+                        uri=about,
+                        label=label,
+                        super_classes=super_classes
+                    )
+                    continue
+                
+                # 解析属性定义：检查是否为 rdf:Property 或 owl:ObjectProperty/DatatypeProperty
+                if type_uri in [
+                    'http://www.w3.org/1999/02/22-rdf-syntax-ns#Property',
+                    'http://www.w3.org/2002/07/owl#ObjectProperty',
+                    'http://www.w3.org/2002/07/owl#DatatypeProperty'
+                ]:
+                    # 提取属性标签
+                    label_elem = description.find('rdfs:label', namespaces)
+                    label = label_elem.text if label_elem is not None else about.split('#')[-1].split('/')[-1]
+                    
+                    # 提取 domain 和 range 定义，用于属性约束
+                    domain = []
+                    for d in description.findall('rdfs:domain', namespaces):
+                        d_uri = d.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                        if d_uri:
+                            domain.append(d_uri)
+                    
+                    range_vals = []
+                    for r in description.findall('rdfs:range', namespaces):
+                        r_uri = r.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                        if r_uri:
+                            range_vals.append(r_uri)
+                    
+                    # 根据类型确定属性类别：对象属性或数据属性
+                    prop_type = 'object' if type_uri != 'http://www.w3.org/2002/07/owl#DatatypeProperty' else 'datatype'
+                    
+                    self.properties[about] = OntologyProperty(
+                        uri=about,
+                        label=label,
+                        domain=domain,
+                        range=range_vals,
+                        property_type=prop_type
+                    )
+                    continue
+                
+                # 解析实例定义：任何有类型的资源都视为实例
+                if type_uri:
+                    label_elem = description.find('rdfs:label', namespaces)
+                    label = label_elem.text if label_elem is not None else about.split('#')[-1].split('/')[-1]
+                    
+                    # 收集实例的所有类型声明
+                    types = [type_uri]
+                    
+                    # 解析实例的属性断言（简单属性值）
+                    assertions = {}
+                    for child in description:
+                        tag = child.tag.split('}')[-1] if '}' in child.tag else child.tag
+                        if tag not in ['type', 'label']:
+                            # 提取属性值，优先使用 resource 引用，否则使用文本内容
+                            resource = child.get('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource')
+                            if resource:
+                                assertions[child.tag] = resource
+                            elif child.text:
+                                assertions[child.tag] = child.text.strip()
+                    
+                    self.individuals[about] = OntologyIndividual(
+                        uri=about,
+                        label=label,
+                        types=types,
+                        assertions=assertions
+                    )
+        
+        # 记录加载结果，便于调试和监控
+        logger = logging.getLogger(__name__)
+        logger.info(f"RDF/XML 加载完成: {len(self.classes)} 个类, {len(self.properties)} 个属性, {len(self.individuals)} 个实例")
+        
+        return self
     
     def get_class(self, uri: str) -> Optional[OntologyClass]:
         """获取类"""

@@ -35,13 +35,13 @@ src/api/
 ```python
 from src.ontology.rdf_adapter import RDFAdapter        # RDF 适配层
 from src.ontology.neo4j_client import Neo4jClient      # Neo4j 图数据库
-from src.loader import OntologyLoader                  # 本体加载器
-from src.reasoner import Reasoner                      # 推理引擎
-from src.confidence import ConfidenceCalculator        # 置信度计算
-from src.monitoring import metrics                     # 监控指标
-from src.security import api_key_manager               # 安全认证
-from src.performance import inference_cache            # 性能优化
-from src.export import DataExporter                    # 数据导出
+from src.core.loader import OntologyLoader            # 本体加载器
+from src.core.reasoner import Reasoner                  # 推理引擎
+from src.eval.confidence import ConfidenceCalculator   # 置信度计算
+from src.eval.monitoring import metrics                # 监控指标
+from src.core.security import api_key_manager          # 安全认证
+from src.eval.performance import inference_cache       # 性能优化
+from src.eval.export import DataExporter               # 数据导出
 ```
 
 ### graphql.py - GraphQL 接口

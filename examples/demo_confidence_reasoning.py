@@ -14,9 +14,10 @@ Confidence-Reasoning Demo
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# 修复导入路径：将项目根目录加入 sys.path，使用 src. 前缀导入
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from confidence import ConfidenceCalculator, Evidence
+from src.eval.confidence import ConfidenceCalculator, Evidence
 
 
 def demo_basic_confidence():

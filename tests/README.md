@@ -84,7 +84,7 @@ pytest tests/ -k "confidence" -v
 ### 置信度测试示例
 
 ```python
-from src.confidence import ConfidenceCalculator, Evidence
+from src.eval.confidence import ConfidenceCalculator, Evidence
 
 def test_weighted_average():
     """测试加权平均计算"""
@@ -100,7 +100,7 @@ def test_weighted_average():
 ### 推理引擎测试示例
 
 ```python
-from src.reasoner import Reasoner, Fact
+from src.core.reasoner import Reasoner, Fact
 
 def test_modus_ponens():
     """测试假言推理"""

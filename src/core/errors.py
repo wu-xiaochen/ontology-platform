@@ -18,7 +18,7 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -101,8 +101,7 @@ class ErrorResponse(BaseModel):
     method: Optional[str] = None
     correlation_id: Optional[str] = None
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 # ==================== Custom Exceptions ====================
@@ -157,7 +156,7 @@ class ValidationException(OntologyPlatformException):
         super().__init__(
             message=message,
             code=ErrorCode.VALIDATION_ERROR,
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             details=details,
             severity=ErrorSeverity.WARNING
         )
@@ -377,7 +376,7 @@ async def validation_exception_handler(
     )
     
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content=response.model_dump(exclude_none=True)
     )
 

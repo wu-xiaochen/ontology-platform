@@ -1,41 +1,106 @@
-from fastapi import FastAPI, HTTPException
-from typing import Dict, Any
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, Body
+from typing import Dict, Any, List, Optional
+from pydantic import BaseModel, Field
 import os
-import json
+import logging
 from datetime import datetime
 
-app = FastAPI(title="Ontology Platform API", version="1.0.0")
+from .sdk import ClawraSDK
 
-class OntologyQuery(BaseModel):
-    domain: str
-    query: str
-    parameters: Dict[str, Any] = {}
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-class OntologyResult(BaseModel):
-    success: bool
-    data: Dict[str, Any]
-    reasoning: str
-    confidence: float
-    timestamp: str
+app = FastAPI(
+    title="Clawra Autonomous Agent Framework API",
+    version="4.0.0-alpha.1",
+    description="生产级神经符号认知增强与自主进化接口"
+)
+
+# 全局 SDK 实例（单例模式由 SDK 内部保证或在此管理）
+sdk = ClawraSDK(enable_memory=True, neo4j_enabled=True)
+
+# --- V4.0 数据模型 ---
+
+class LearnRequest(BaseModel):
+    content: str = Field(..., description="待提取知识的非结构化文本")
+    domain: Optional[str] = Field(None, description="领域提示")
+
+class ReasonRequest(BaseModel):
+    query: str = Field(..., description="推理查询问题")
+    context: Optional[List[str]] = Field(None, description="额外上下文")
+
+class APIResponse(BaseModel):
+    success: bool = True
+    message: str = "Success"
+    data: Any = None
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+# --- V4.0 核心接口 ---
 
 @app.get("/")
 async def root():
-    return {"message": "Ontology Platform API", "version": "1.0.0"}
+    return {
+        "framework": "Clawra",
+        "version": "4.0.0-alpha.1",
+        "status": "Cognitive Engine Ready",
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.post("/api/v4/learn", response_model=APIResponse)
+async def api_learn(request: LearnRequest):
+    """自主知识学习与本体同步"""
+    try:
+        result = sdk.learn(request.content, domain=request.domain)
+        return APIResponse(data=result)
+    except Exception as e:
+        logger.error(f"Learn API Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v4/reason", response_model=APIResponse)
+async def api_reason(request: ReasonRequest):
+    """神经符号混合推理"""
+    try:
+        # TODO: SDK 内部应支持异步调用，此处暂用同步包装
+        result = sdk.reason(request.query, context=request.context)
+        return APIResponse(data=result)
+    except Exception as e:
+        logger.error(f"Reason API Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v4/evolve", response_model=APIResponse)
+async def api_evolve():
+    """手动触发系统进化闭环"""
+    try:
+        result = await sdk.evolve()
+        return APIResponse(data=result)
+    except Exception as e:
+        logger.error(f"Evolve API Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v4/graph", response_model=APIResponse)
+async def api_get_graph():
+    """获取知识图谱可视化数据"""
+    try:
+        result = sdk.get_graph_data()
+        return APIResponse(data=result)
+    except Exception as e:
+        logger.error(f"Graph API Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- 兼容性 Legacy 接口 ---
 
 @app.post("/query")
 async def query_ontology(query: OntologyQuery):
-    """根据习律查询分析数据"""
+    """(Legacy) 根据本体查询分析数据"""
     try:
-        # 调用本体分析引擎
-        result = await analyze_ontology(query.domain, query.query, query.parameters)
+        # 路由到 SDK 进行处理
+        # 兼容旧版本的分析逻辑，尝试通过 SDK 的 reason 或 learn 获取结果
+        result = sdk.reason(f"在 {query.domain} 领域下分析: {query.query}")
         
-        return OntologyResult(
-            success=True,
+        return APIResponse(
             data=result,
-            reasoning="Ontology-based reasoning completed",
-            confidence=0.95,
-            timestamp=datetime.now().isoformat()
+            message="Legacy API routed through Clawra v4.0 Cognitive Engine"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

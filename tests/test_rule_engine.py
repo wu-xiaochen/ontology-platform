@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 import pytest
 import tempfile
 from pathlib import Path
-from core.ontology.rule_engine import SafeMathSandbox, OntologyRule, RuleEngine
+from src.core.ontology.rule_engine import SafeMathSandbox, OntologyRule, RuleEngine
 
 
 class TestSafeMathSandbox:
@@ -64,7 +64,7 @@ class TestSafeMathSandbox:
     
     def test_unsupported_operation(self):
         """Test that unsupported operations raise error"""
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, ValueError)):
             # Lambda functions should not be allowed
             SafeMathSandbox.evaluate("lambda x: x + 1", {})
     

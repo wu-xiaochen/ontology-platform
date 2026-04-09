@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import logging
 from typing import Dict, List, Any
@@ -29,7 +30,8 @@ class GlossaryEngine:
 
     def discover_glossary(self, ddl_text: str) -> Dict[str, str]:
         """
-        根据 DDL 或元数据文本发现映射关系
+        根据 DDL 或元数据文本发现映射关系。
+        策略：LLM json_object → LLM 纯文本解析 → 正则 DDL 注释提取
         """
         if not self.client:
             logger.warning("GlossaryEngine: No API key found, returning empty mock.")
@@ -42,6 +44,7 @@ class GlossaryEngine:
             "注意：只返回 JSON，不要任何解释。"
         )
         
+        # 策略1: 尝试 json_object 响应格式
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -51,8 +54,37 @@ class GlossaryEngine:
             mapping = json.loads(response.choices[0].message.content)
             return mapping
         except Exception as e:
-            logger.error(f"Glossary discovery failed: {e}")
-            return {}
+            logger.warning(f"Glossary json_object mode failed, falling back to text mode: {e}")
+        
+        # 策略2: 不指定 response_format，从纯文本中解析 JSON
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            content = response.choices[0].message.content
+            # 提取 JSON 块（可能被 ```json ... ``` 包裹）
+            json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
+            if json_match:
+                mapping = json.loads(json_match.group())
+                return mapping
+        except Exception as e:
+            logger.warning(f"Glossary text mode failed, falling back to regex: {e}")
+        
+        # 策略3: 正则从 DDL 注释中直接提取 (离线兜底)
+        return self._extract_from_comments(ddl_text)
+    
+    def _extract_from_comments(self, ddl_text: str) -> Dict[str, str]:
+        """从 DDL 注释中用正则提取物理名→业务名映射"""
+        mapping = {}
+        # 模式: -- FIELD_NAME 是/为/指 中文描述
+        for m in re.finditer(r'--\s*([A-Z_][A-Z0-9_]*)\s*(?:是|为|指|→|->|:)\s*([\u4e00-\u9fff]+)', ddl_text):
+            mapping[m.group(1)] = m.group(2)
+        # 模式: COMMENT ON COLUMN ... IS '...' 或 DDL 内联注释
+        for m in re.finditer(r'\b([A-Z_][A-Z0-9_]*)\s+\w+.*?--\s*([\u4e00-\u9fff]+)', ddl_text):
+            if m.group(1) not in mapping:
+                mapping[m.group(1)] = m.group(2)
+        return mapping
 
     def enrich_extractor_context(self, current_context: str, ddl_source: str) -> str:
         """

@@ -5,8 +5,8 @@ import re
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
-from core.reasoner import Fact
-from chunking.hierarchical import HierarchicalChunker
+from ..core.reasoner import Fact
+from ..chunking.hierarchical import HierarchicalChunker
 
 logger = logging.getLogger(__name__)
 

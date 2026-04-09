@@ -5,7 +5,7 @@ import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
-from core.reasoner import Reasoner
+from src.core.reasoner import Reasoner
 from memory.base import SemanticMemory, EpisodicMemory
 from agents.orchestrator import CognitiveOrchestrator
 

@@ -1,5 +1,6 @@
 import logging
 from typing import List, Dict, Any
+from ..utils.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +14,11 @@ class MemoryGovernor:
     def __init__(self, semantic_memory, reasoner):
         self.semantic_memory = semantic_memory
         self.reasoner = reasoner
-        self.decay_rate = 0.05       # 每次衰减扣除的置信度
-        self.reinforce_rate = 0.10   # 每次强化增加的置信度
-        self.prune_threshold = 0.20  # 置信度低于此值将被遗忘 (剪枝)
+        # 从 ConfigManager 读取记忆治理参数，避免硬编码
+        _mem_cfg = get_config().memory
+        self.decay_rate = _mem_cfg.decay_rate           # 每次衰减扣除的置信度
+        self.reinforce_rate = _mem_cfg.reinforce_rate   # 每次强化增加的置信度
+        self.prune_threshold = _mem_cfg.prune_threshold # 置信度低于此值将被遗忘 (剪枝)
 
     def reinforce_path(self, facts_used: List[Any]):
         """正向强化: 某条推理路径被成功采纳后，强化途径的神经元"""

@@ -14,10 +14,26 @@ logger = logging.getLogger(__name__)
 class SafeMathSandbox:
     """AST-based secure sandbox for executing dynamically extracted business formulas"""
     
-    # Extended operator support including math functions
+    @staticmethod
+    def _safe_pow(a, b):
+        if not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+            raise ValueError("Exponent types not supported.")
+        if abs(b) > 1000: # Limit power exponent
+            raise ValueError("Exponent too large, preventing CPU DoS")
+        return operator.pow(a, b)
+
+    @staticmethod
+    def _safe_mult(a, b):
+        if isinstance(a, str) and isinstance(b, int) and b > 1000:
+            raise ValueError("String multiplication factor too large, preventing OOM")
+        if isinstance(b, str) and isinstance(a, int) and a > 1000:
+            raise ValueError("String multiplication factor too large, preventing OOM")
+        return operator.mul(a, b)
+
+    # Extended operator support including safe math functions
     allowed_operators = {
-        ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
-        ast.Div: operator.truediv, ast.Pow: operator.pow,
+        ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: _safe_mult.__func__, # 绑定函数而不是staticmethod对象
+        ast.Div: operator.truediv, ast.Pow: _safe_pow.__func__,
         ast.USub: operator.neg, ast.Eq: operator.eq, ast.NotEq: operator.ne,
         ast.Lt: operator.lt, ast.LtE: operator.le, ast.Gt: operator.gt, ast.GtE: operator.ge,
         ast.And: lambda a,b: a and b, ast.Or: lambda a,b: a or b, ast.Not: operator.not_
@@ -28,6 +44,14 @@ class SafeMathSandbox:
         'abs': abs, 'min': min, 'max': max, 'round': round,
         'sum': sum, 'len': len
     }
+
+    @classmethod
+    def _get_ast_depth(cls, node) -> int:
+        """递归计算 AST 的深度"""
+        max_depth = 0
+        for child in ast.iter_child_nodes(node):
+            max_depth = max(max_depth, cls._get_ast_depth(child))
+        return 1 + max_depth
 
     @classmethod
     def evaluate(cls, expression: str, context: Dict[str, Any]) -> Any:
@@ -46,6 +70,14 @@ class SafeMathSandbox:
         """
         try:
             tree = ast.parse(expression, mode='eval')
+            
+            # 安全防护：防止恶意或幻觉生成的超深递归树引发 DoS
+            from src.utils.config import get_config
+            cfg = get_config()
+            max_depth = getattr(cfg.reasoning, 'max_inference_depth', 5) * 5  # Allow generous depth relatively
+            if cls._get_ast_depth(tree) > 20:
+                raise ValueError(f"AST recursion depth exceeded safety threshold")
+                
             return cls._eval_node(tree.body, context)
         except SyntaxError as e:
             logger.error(f"Syntax error in expression '{expression}': {e}")
@@ -56,32 +88,53 @@ class SafeMathSandbox:
 
     @classmethod
     def _eval_node(cls, node, context: Dict[str, Any]):
+        """AST 节点递归求值，仅允许白名单中的运算符和函数"""
         if isinstance(node, ast.Constant):
+            # 常量节点：直接返回字面值（数字、字符串、布尔）
             return node.value
         elif isinstance(node, ast.Name):
+            # 变量名节点：从上下文中查找变量值
             if node.id in context:
                 return context[node.id]
             raise ValueError(f"Variable '{node.id}' not found in context")
         elif isinstance(node, ast.BinOp):
+            # 二元运算节点：递归求值左右操作数后应用运算符
             left = cls._eval_node(node.left, context)
             right = cls._eval_node(node.right, context)
             return cls.allowed_operators[type(node.op)](left, right)
         elif isinstance(node, ast.UnaryOp):
+            # 一元运算节点：如取负 (-x)
             operand = cls._eval_node(node.operand, context)
             return cls.allowed_operators[type(node.op)](operand)
         elif isinstance(node, ast.Compare):
+            # 比较运算节点：支持链式比较 (a <= b <= c)
             left = cls._eval_node(node.left, context)
             for op, comparator in zip(node.ops, node.comparators):
                 right = cls._eval_node(comparator, context)
+                # 任一比较失败则立即返回 False
                 if not cls.allowed_operators[type(op)](left, right):
                     return False
-                left = right
+                left = right  # 链式比较：将右操作数作为下一次的左操作数
             return True
         elif isinstance(node, ast.BoolOp):
+            # 布尔运算节点：and/or 短路求值
             if isinstance(node.op, ast.And):
                 return all(cls._eval_node(v, context) for v in node.values)
             elif isinstance(node.op, ast.Or):
                 return any(cls._eval_node(v, context) for v in node.values)
+        elif isinstance(node, ast.Call):
+            # 函数调用节点：仅允许白名单中的安全函数 (abs/min/max 等)
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+                if func_name in cls.allowed_functions:
+                    # 递归求值所有参数后调用白名单函数
+                    args = [cls._eval_node(arg, context) for arg in node.args]
+                    return cls.allowed_functions[func_name](*args)
+                else:
+                    raise ValueError(f"Function '{func_name}' is not allowed")
+            else:
+                raise TypeError(f"Unsupported function call type: {type(node.func)}")
+        # 未识别的 AST 节点类型，拒绝执行以保证安全
         raise TypeError(f"Unsupported AST node type: {type(node)}")
 
 

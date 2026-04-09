@@ -365,7 +365,13 @@ class Mutation:
         if not client:
             return None
         
-        props = json.loads(properties) if properties else {}
+        try:
+            # 解析客户端传入的JSON格式属性字符串
+            props = json.loads(properties) if properties else {}
+        except json.JSONDecodeError as e:
+            # 属性参数不是有效的JSON格式，记录错误并返回None让调用方处理
+            logger.error(f"创建实体时属性JSON解析失败: {e}")
+            return None
         node = client.create_entity(name, label, props, confidence)
         if not node:
             return None
@@ -391,7 +397,13 @@ class Mutation:
         if not client:
             return None
         
-        props = json.loads(properties) if properties else {}
+        try:
+            # 解析客户端传入的JSON格式属性字符串
+            props = json.loads(properties) if properties else {}
+        except json.JSONDecodeError as e:
+            # 属性参数不是有效的JSON格式，记录错误并返回None让调用方处理
+            logger.error(f"创建关系时属性JSON解析失败: {e}")
+            return None
         rel = client.create_relationship(
             start_entity, end_entity, relationship_type, props, confidence
         )
@@ -471,9 +483,20 @@ class Mutation:
             )
         
         import json
-        evidence_list_data = json.loads(evidence) if evidence else []
+        try:
+            # 解析证据列表的JSON字符串
+            evidence_list_data = json.loads(evidence) if evidence else []
+        except json.JSONDecodeError as e:
+            # 证据参数JSON格式错误，返回带有错误信息的默认结果
+            logger.error(f"证据数据JSON解析失败: {e}")
+            return ConfidenceResultType(
+                value=0.0,
+                method=method,
+                evidence_count=0,
+                details=json.dumps({"error": f"证据JSON解析失败: {e}"})
+            )
         
-        from src.confidence import Evidence
+        from src.eval.confidence import Evidence
         evidence_list = [
             Evidence(
                 source=e.get("source", "unknown"),

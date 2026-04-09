@@ -30,6 +30,8 @@ v3.5.0 Updates:
 """
 
 import logging
+import os
+import json
 import time
 import uuid
 from pathlib import Path
@@ -53,22 +55,22 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.ontology.rdf_adapter import RDFAdapter, RDFTriple, OntologySchema
 from src.ontology.neo4j_client import Neo4jClient, GraphNode, GraphRelationship
-from src.loader import OntologyLoader
-from src.reasoner import Reasoner, Fact, InferenceResult
-from src.confidence import ConfidenceCalculator, Evidence, ConfidenceResult
+from src.core.loader import OntologyLoader
+from src.core.reasoner import Reasoner, Fact, InferenceResult
+from src.eval.confidence import ConfidenceCalculator, Evidence, ConfidenceResult
 
 # 导入新模块
-from src.monitoring import metrics, health_checker, request_logger, performance_monitor
-from src.security import (
+from src.eval.monitoring import metrics, health_checker, request_logger, performance_monitor
+from src.core.security import (
     api_key_manager, rate_limiter, ip_blocker, 
     SecurityHeaders, InputValidator, audit_logger, cors_config
 )
-from src.performance import (
+from src.eval.performance import (
     inference_cache, cached, profiler, 
     optimization_config, resource_manager
 )
-from src.export import DataExporter, ExportFormat, ExportOptions, data_exporter
-from src.permissions import permission_manager, Permission, Resource, ResourceType
+from src.eval.export import DataExporter, ExportFormat, ExportOptions, data_exporter
+from src.core.permissions import permission_manager, Permission, Resource, ResourceType
 
 # 定义logger用于模块级导入错误
 _import_logger = logging.getLogger(__name__)
@@ -88,16 +90,16 @@ try:
 except ImportError as e:
     AUTO_LEARN_AVAILABLE = False
     _import_logger.warning(f"Auto-learn engine not available: {e}")
-from src.caching import query_cache, debug_cache, create_cache
+from src.llm.caching import query_cache, debug_cache, create_cache
 
 # 导入错误处理和缓存策略
-from src.errors import (
+from src.core.errors import (
     setup_exception_handlers, error_handler,
     ErrorResponse, ErrorCode, ErrorSeverity,
     OntologyPlatformException, NotFoundException, ValidationException,
     UnauthorizedException, ForbiddenException, RateLimitException
 )
-from src.cache_strategy import (
+from src.llm.cache_strategy import (
     EnhancedLRUCache, TwoLevelCache, RedisCache, CacheWarmer,
     CacheConfig, CacheStrategy, create_cache as create_enhanced_cache
 )
@@ -107,26 +109,37 @@ logger = logging.getLogger(__name__)
 
 
 # ==================== 配置 ====================
+# 统一使用 ConfigManager，避免重复定义 AppConfig
+from ..utils.config import get_config as _get_global_config
+
+
+# 模块级常量：默认配置值，避免硬编码魔术字符串
+# 从环境变量或配置系统读取，确保零硬编码原则
+DEFAULT_ONTOLOGY_PATH: str = os.getenv("ONTOLOGY_PATH", "data/ontology.jsonl")
+DEFAULT_BASE_URI: str = os.getenv("BASE_URI", "http://example.org/")
+DEFAULT_API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
+DEFAULT_API_PORT: int = int(os.getenv("API_PORT", "8000"))
+
 
 @dataclass
 class AppConfig:
-    """应用配置"""
-    # Neo4j配置
-    neo4j_uri: str = "bolt://localhost:7687"
-    neo4j_user: str = "neo4j"
-    neo4j_password: str = "neo4j"
-    
-    # 本体配置
-    ontology_path: str = "data/ontology.jsonl"
-    base_uri: str = "http://example.org/"
-    
-    # API配置
-    api_host: str = "0.0.0.0"
-    api_port: int = 8000
-    
-    # 推理配置
-    max_inference_depth: int = 5
-    min_confidence: float = 0.0
+    """应用配置 - 从 ConfigManager 读取，避免硬编码"""
+    def __init__(self) -> None:
+        # 从全局 ConfigManager 读取配置
+        _cfg = _get_global_config()
+        # Neo4j配置
+        self.neo4j_uri: str = _cfg.database.neo4j_uri
+        self.neo4j_user: str = _cfg.database.neo4j_user
+        self.neo4j_password: str = _cfg.database.neo4j_password
+        # 本体配置 - 使用模块级常量作为默认值，避免硬编码
+        self.ontology_path: str = os.getenv("ONTOLOGY_PATH", DEFAULT_ONTOLOGY_PATH)
+        self.base_uri: str = os.getenv("BASE_URI", DEFAULT_BASE_URI)
+        # API配置 - 使用模块级常量作为默认值，确保配置可外部化
+        self.api_host: str = os.getenv("API_HOST", DEFAULT_API_HOST)
+        self.api_port: int = int(os.getenv("API_PORT", str(DEFAULT_API_PORT)))
+        # 推理配置
+        self.max_inference_depth: int = _cfg.reasoning.max_inference_depth
+        self.min_confidence: float = _cfg.reasoning.min_confidence
 
 
 config = AppConfig()
@@ -265,7 +278,20 @@ async def lifespan(app: FastAPI):
         if ontology_file.exists():
             state.rdf_adapter.load_jsonl(str(ontology_file))
             logger.info(f"Loaded ontology from {ontology_file}")
+    except FileNotFoundError as e:
+        # 本体文件不存在时的特定处理
+        logger.warning(f"Ontology file not found: {e}")
+        state.rdf_adapter = RDFAdapter(config.base_uri)
+    except json.JSONDecodeError as e:
+        # JSON解析错误时的特定处理
+        logger.warning(f"Invalid JSON format in ontology file: {e}")
+        state.rdf_adapter = RDFAdapter(config.base_uri)
+    except PermissionError as e:
+        # 权限错误时的特定处理
+        logger.warning(f"Permission denied when reading ontology file: {e}")
+        state.rdf_adapter = RDFAdapter(config.base_uri)
     except Exception as e:
+        # 其他未预料的异常兜底处理
         logger.warning(f"Could not load ontology: {e}")
         state.rdf_adapter = RDFAdapter(config.base_uri)
     
@@ -378,7 +404,7 @@ app.add_middleware(SecurityMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 # 注册监控端点
-from src.monitoring import setup_app_metrics
+from src.eval.monitoring import setup_app_metrics
 setup_app_metrics(app)
 
 # 注册异常处理器
@@ -1378,9 +1404,19 @@ class CacheConfigRequest(BaseModel):
     max_size: int = Field(default=1000, ge=1, le=100000, description="Maximum cache size")
     default_ttl: float = Field(default=3600, ge=1, le=86400, description="Default TTL in seconds")
     enable_redis: bool = Field(default=False, description="Enable Redis L2 cache")
-    redis_host: str = Field(default="localhost", description="Redis host")
-    redis_port: int = Field(default=6379, description="Redis port")
-    redis_db: int = Field(default=0, description="Redis database number")
+    # 从零硬编码原则：Redis 连接参数默认从环境变量读取
+    redis_host: str = Field(
+        default_factory=lambda: os.getenv("REDIS_HOST", "localhost"),
+        description="Redis host"
+    )
+    redis_port: int = Field(
+        default_factory=lambda: int(os.getenv("REDIS_PORT", "6379")),
+        description="Redis port"
+    )
+    redis_db: int = Field(
+        default_factory=lambda: int(os.getenv("REDIS_DB", "0")),
+        description="Redis database number"
+    )
 
 
 @app.post("/api/v1/performance/cache/config")

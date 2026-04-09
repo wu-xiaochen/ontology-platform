@@ -148,18 +148,27 @@ class Neo4jClient:
         paths = client.trace_inference("Alice", "Bob")
     """
     
-    def __init__(self, uri: str = "bolt://localhost:7687",
-                 user: str = "neo4j", password: str = "neo4j",
-                 database: str = "neo4j"):
+    def __init__(self, uri: str = None,
+                 user: str = None, password: str = None,
+                 database: str = None):
         """
         初始化Neo4j客户端
         
         Args:
-            uri: Neo4j连接URI
-            user: 用户名
-            password: 密码
-            database: 数据库名
+            uri: Neo4j连接URI（默认从 ConfigManager 读取）
+            user: 用户名（默认从 ConfigManager 读取）
+            password: 密码（默认从 ConfigManager 读取）
+            database: 数据库名（默认从 ConfigManager 读取）
         """
+        # 从统一配置管理器获取 Neo4j 连接参数，消除硬编码
+        if uri is None or user is None or password is None or database is None:
+            from ..utils.config import get_config
+            _cfg = get_config().database
+            uri = uri or _cfg.neo4j_uri
+            user = user or _cfg.neo4j_user
+            password = password or _cfg.neo4j_password
+            database = database or "neo4j"  # 数据库名默认 neo4j
+        
         self.uri = uri
         self.user = user
         self.password = password
@@ -886,20 +895,27 @@ class Neo4jClient:
 
 # ==================== 便捷函数 ====================
 
-def create_neo4j_client(uri: str = "bolt://localhost:7687",
-                         user: str = "neo4j",
-                         password: str = "neo4j") -> Neo4jClient:
+def create_neo4j_client(uri: str = None,
+                         user: str = None,
+                         password: str = None) -> Neo4jClient:
     """
     创建Neo4j客户端
     
     Args:
-        uri: 连接URI
-        user: 用户名
-        password: 密码
+        uri: 连接URI（默认从 ConfigManager 读取）
+        user: 用户名（默认从 ConfigManager 读取）
+        password: 密码（默认从 ConfigManager 读取）
     
     Returns:
         Neo4jClient实例
     """
+    # 从统一配置管理器获取 Neo4j 连接参数，消除硬编码
+    if uri is None or user is None or password is None:
+        from ..utils.config import get_config
+        _cfg = get_config().database
+        uri = uri or _cfg.neo4j_uri
+        user = user or _cfg.neo4j_user
+        password = password or _cfg.neo4j_password
     return Neo4jClient(uri, user, password)
 
 

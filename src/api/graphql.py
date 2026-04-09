@@ -475,7 +475,7 @@ class Mutation:
         import json
         evidence_list_data = json.loads(evidence) if evidence else []
         
-        from src.confidence import Evidence
+        from src.eval.confidence import Evidence
         evidence_list = [
             Evidence(
                 source=e.get("source", "unknown"),

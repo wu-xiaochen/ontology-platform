@@ -1,16 +1,28 @@
 # Examples
 
-示例代码集合，展示 ontology-platform 的各种使用场景。
+示例代码集合，展示 Clawra 自主进化 Agent 的各种使用场景。
 
-## 快速开始
+## 核心 Demo（推荐）
 
-### 1. Hello World
+### Clawra 自主进化 Agent Demo
+```bash
+streamlit run examples/clawra_demo.py
+```
+完整展示 Clawra 四大核心能力：
+- **自主学习** — 从文本自动提取对象、关系、逻辑和行为
+- **本体图谱** — 可视化学习成果的结构化本体
+- **无幻觉推理** — 100% 基于学习内容的确定性推理，零 LLM 依赖
+- **进化统计** — 学习历程、策略效果、规则发现的量化展示
+
+## 基础示例
+
+### Hello World
 ```bash
 python examples/hello_ontology.py
 ```
 最基础的示例，展示如何创建本体和添加知识。
 
-### 2. 完整集成演示
+### 完整集成演示
 ```bash
 python examples/complete_integration_demo.py
 ```
@@ -18,73 +30,23 @@ python examples/complete_integration_demo.py
 
 ## 进阶示例
 
-### 3. 置信度推理
+### 置信度推理
 ```bash
 python examples/demo_confidence_reasoning.py
 ```
 展示置信度计算和基于置信度的推理。
 
-### 4. 供应商监控
+### 供应商监控
 ```bash
 python examples/demo_supplier_monitor.py
 ```
 实际业务场景：供应商风险监控。
 
-### 5. 招聘助手
-```bash
-python examples/hiring_assistant_demo.py
-```
-完整的招聘助手应用，包含：
-- 简历解析
-- 候选人匹配
-- 面试问题生成
-
-### 6. 供应链风险评估
-```bash
-python examples/supply_chain_risk_demo.py
-```
-企业级供应链风控系统，展示：
-- 多维度风险评估（交货、质量、财务）
-- 置信度计算与证据追踪
-- 自动风险等级分类
-- 可解释的推理链输出
-
-## 高级示例
-
-### 7. Agent 成长演示
+### Agent 成长演示
 ```bash
 python examples/agent_growth_demo.py
 ```
 展示 Agent 如何通过反思和学习不断成长。
-
-### 8. Clawra 全栈演示
-```bash
-python examples/clawra_full_stack_demo.py
-```
-Clawra 系统的全栈功能演示。
-
-### 9. Phase 3 高级功能
-```bash
-python examples/phase3_advanced_demo.py
-```
-Phase 3 的高级功能展示。
-
-### 10. Phase 5 企业级功能
-```bash
-python examples/phase5_enterprise_demo.py
-```
-企业级功能演示，包括：
-- 多租户支持
-- 权限管理
-- 审计日志
-
-## Web 应用
-
-### Streamlit 应用
-```bash
-streamlit run examples/streamlit_app.py
-```
-交互式 Web 界面，可视化展示平台功能。
 
 ## 运行要求
 

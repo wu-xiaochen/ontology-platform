@@ -52,106 +52,156 @@ class CacheEntry:
 
 # ==================== Base Cache ====================
 
-class BaseCache(Generic[T]):
-    """Base cache interface"""
+from abc import ABC, abstractmethod
+
+
+class BaseCache(ABC, Generic[T]):
+    """
+    缓存基类接口
     
+    使用抽象基类模式定义缓存的标准接口，强制子类实现核心方法。
+    这种设计确保所有缓存实现都遵循统一的契约，便于替换和扩展。
+    """
+    
+    @abstractmethod
     def get(self, key: str) -> Optional[T]:
-        raise NotImplementedError
+        """根据键获取缓存值，子类必须实现"""
+        pass
     
+    @abstractmethod
     def set(self, key: str, value: T, ttl: float = None, tags: List[str] = None):
-        raise NotImplementedError
+        """设置缓存值，子类必须实现"""
+        pass
     
+    @abstractmethod
     def delete(self, key: str):
-        raise NotImplementedError
+        """删除指定键的缓存，子类必须实现"""
+        pass
     
+    @abstractmethod
     def clear(self):
-        raise NotImplementedError
+        """清空所有缓存，子类必须实现"""
+        pass
     
+    @abstractmethod
     def stats(self) -> Dict[str, Any]:
-        raise NotImplementedError
+        """获取缓存统计信息，子类必须实现"""
+        pass
 
 
 # ==================== LRU Cache ====================
 
 class LRUCache(BaseCache[T]):
-    """Thread-safe LRU cache with TTL support"""
+    """
+    线程安全的 LRU 缓存实现，支持 TTL 过期
+    
+    使用 OrderedDict 实现 O(1) 的访问和淘汰操作，
+    配合线程锁确保并发安全。
+    """
     
     def __init__(self, max_size: int = 1000, default_ttl: float = 3600):
+        # 最大缓存容量，超过时触发 LRU 淘汰
         self.max_size = max_size
+        # 默认过期时间（秒），None 表示永不过期
         self.default_ttl = default_ttl
+        # 使用 OrderedDict 保持访问顺序，实现 LRU 策略
         self._cache: OrderedDict = OrderedDict()
+        # 存储每个键的元数据（创建时间、访问次数等）
         self._metadata: Dict[str, CacheEntry] = {}
+        # 线程锁，保证多线程环境下的操作原子性
         self._lock = Lock()
         
-        # Statistics
-        self._hits = 0
-        self._misses = 0
-        self._evictions = 0
+        # 统计指标：用于监控缓存性能
+        self._hits = 0  # 缓存命中次数
+        self._misses = 0  # 缓存未命中次数
+        self._evictions = 0  # 被淘汰的条目数
     
     def _make_key(self, *args, **kwargs) -> str:
-        """Generate cache key from arguments"""
+        """
+        从参数生成缓存键
+        
+        使用 JSON 序列化和 MD5 哈希确保键的一致性和唯一性，
+        sort_keys=True 保证相同参数生成的键相同，不受字典顺序影响。
+        """
         key_data = json.dumps({"args": args, "kwargs": kwargs}, sort_keys=True, default=str)
         return hashlib.md5(key_data.encode()).hexdigest()
     
     def get(self, key: str) -> Optional[T]:
-        """Get value from cache"""
+        """
+        从缓存获取值
+        
+        先检查键是否存在，再检查是否过期，最后更新访问顺序。
+        这种顺序确保过期条目能及时清理，同时保持 LRU 顺序准确。
+        """
         with self._lock:
+            # 键不存在，记录未命中
             if key not in self._cache:
                 self._misses += 1
                 return None
             
             entry = self._metadata[key]
             
-            # Check TTL
+            # 检查 TTL 是否过期：过期则淘汰并返回未命中
             if entry.is_expired():
                 self._evict(key)
                 self._misses += 1
                 return None
             
-            # Move to end (most recently used)
+            # 移动到 OrderedDict 末尾表示最近使用
             self._cache.move_to_end(key)
-            entry.touch()
+            entry.touch()  # 更新访问时间和计数
             
             self._hits += 1
             return entry.value
     
-    def set(self, key: str, value: T, ttl: float = None, tags: List[str] = None):
-        """Set value in cache"""
+    def set(self, key: str, value: T, ttl: Optional[float] = None, tags: Optional[List[str]] = None):
+        """
+        设置缓存值
+        
+        如果缓存已满，先淘汰最久未使用的条目。
+        使用 Optional 类型注解允许 ttl 为 None，表示使用默认值。
+        """
         with self._lock:
-            # Remove oldest if at capacity
+            # 缓存已满时，淘汰 LRU 条目直到有空间
             while len(self._cache) >= self.max_size:
                 self._evict_next()
             
             now = time.time()
             self._cache[key] = value
+            # 创建元数据条目，记录创建时间和 TTL
             self._metadata[key] = CacheEntry(
                 key=key,
                 value=value,
                 created_at=now,
                 accessed_at=now,
-                ttl=ttl or self.default_ttl,
+                ttl=ttl or self.default_ttl,  # 使用传入值或默认值
                 tags=tags or []
             )
     
     def _evict_next(self):
-        """Evict least recently used item"""
+        """
+        淘汰最久未使用的条目
+        
+        OrderedDict 的第一个元素就是最久未访问的，直接淘汰即可。
+        这是 LRU 策略的核心实现。
+        """
         if self._cache:
-            key = next(iter(self._cache))
+            key = next(iter(self._cache))  # 获取第一个键（最久未使用）
             self._evict(key)
             self._evictions += 1
     
     def _evict(self, key: str):
-        """Evict a specific key"""
+        """淘汰指定键：从缓存和元数据中同时删除"""
         self._cache.pop(key, None)
         self._metadata.pop(key, None)
     
     def delete(self, key: str):
-        """Delete value from cache"""
+        """从缓存中删除指定键"""
         with self._lock:
             self._evict(key)
     
     def clear(self):
-        """Clear entire cache"""
+        """清空整个缓存并重置统计"""
         with self._lock:
             self._cache.clear()
             self._metadata.clear()
@@ -160,8 +210,14 @@ class LRUCache(BaseCache[T]):
             self._evictions = 0
     
     def invalidate_by_tag(self, tag: str):
-        """Invalidate all entries with a specific tag"""
+        """
+        按标签淘汰条目
+        
+        用于批量删除相关数据，例如清除某个模块的所有缓存。
+        遍历所有元数据，删除包含指定标签的条目。
+        """
         with self._lock:
+            # 收集所有包含该标签的键
             keys_to_delete = [
                 k for k, v in self._metadata.items()
                 if tag in v.tags
@@ -171,8 +227,14 @@ class LRUCache(BaseCache[T]):
             logger.info(f"Invalidated {len(keys_to_delete)} entries with tag: {tag}")
     
     def cleanup_expired(self):
-        """Remove expired entries"""
+        """
+        清理过期条目
+        
+        定期调用此方法可释放内存，防止过期数据占用空间。
+        适用于没有主动过期检查的场景。
+        """
         with self._lock:
+            # 找出所有过期的键
             keys_to_delete = [
                 k for k, v in self._metadata.items()
                 if v.is_expired()
@@ -184,7 +246,12 @@ class LRUCache(BaseCache[T]):
                 logger.info(f"Cleaned up {len(keys_to_delete)} expired entries")
     
     def stats(self) -> Dict[str, Any]:
-        """Get cache statistics"""
+        """
+        获取缓存统计信息
+        
+        返回命中率、大小等关键指标，用于监控缓存性能。
+        命中率低于预期时可能需要调整缓存策略或容量。
+        """
         with self._lock:
             total = self._hits + self._misses
             hit_rate = self._hits / total if total > 0 else 0
@@ -194,7 +261,7 @@ class LRUCache(BaseCache[T]):
                 "max_size": self.max_size,
                 "hits": self._hits,
                 "misses": self._misses,
-                "hit_rate": round(hit_rate, 4),
+                "hit_rate": round(hit_rate, 4),  # 命中率，越高越好
                 "evictions": self._evictions,
                 "default_ttl": self.default_ttl
             }

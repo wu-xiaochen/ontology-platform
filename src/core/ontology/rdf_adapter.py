@@ -349,9 +349,68 @@ class RDFAdapter:
             self.stats["concepts"] += 1
     
     def _extract_concept(self, uri: str, concept_data: Dict):
-        """提取概念"""
-        # 实现概念提取逻辑
-        pass
+        """
+        从JSONL数据中提取概念定义并注册到本体Schema
+        
+        该方法解析concept_data字典，提取概念的标签、描述、类型等信息，
+        并将其作为类定义或实例属性添加到本体Schema中。
+        
+        Args:
+            uri: 概念的URI标识符
+            concept_data: 包含概念信息的字典，可能包含label、description、type等字段
+        """
+        # 从URI中提取概念标签（取最后一段，支持#和/两种分隔符）
+        concept_label = concept_data.get("label") or uri.split("#")[-1].split("/")[-1]
+        
+        # 获取概念描述，用于提供语义解释
+        description = concept_data.get("description", "")
+        
+        # 获取概念类型，默认为"Concept"，用于区分不同类型的本体元素
+        concept_type = concept_data.get("type", "Concept")
+        
+        # 获取置信度级别，反映概念的可信程度
+        confidence = concept_data.get("confidence", "CONFIRMED")
+        
+        # 获取来源信息，用于追溯概念的数据来源
+        source = concept_data.get("source", "concept_extraction")
+        
+        # 获取父概念列表，用于构建概念层次结构
+        super_classes = concept_data.get("super_classes", [])
+        
+        # 如果概念类型是Class或没有指定类型，将其作为本体类注册
+        if concept_type in ["Class", "Concept", "Entity"]:
+            if uri not in self.schema.classes:
+                # 创建新的类定义并添加到Schema
+                self.schema.add_class(OntologyClassDef(
+                    uri=uri,
+                    label=concept_label,
+                    description=description,
+                    super_classes=super_classes if isinstance(super_classes, list) else [super_classes],
+                    confidence=confidence,
+                    source=source
+                ))
+                self.stats["concepts"] += 1
+                logger.debug(f"从JSONL提取概念类: {uri} ({concept_label})")
+        
+        # 如果概念类型是Property，将其作为属性定义注册
+        elif concept_type in ["Property", "Relation", "Attribute"]:
+            if uri not in self.schema.properties:
+                # 确定属性类型（对象属性或数据属性）
+                prop_type = concept_data.get("property_type", "object")
+                domain = concept_data.get("domain", [])
+                range_vals = concept_data.get("range", [])
+                
+                self.schema.add_property(OntologyPropertyDef(
+                    uri=uri,
+                    label=concept_label,
+                    property_type=prop_type,
+                    description=description,
+                    domain=domain if isinstance(domain, list) else [domain],
+                    range=range_vals if isinstance(range_vals, list) else [range_vals],
+                    confidence=confidence,
+                    source=source
+                ))
+                logger.debug(f"从JSONL提取属性: {uri} ({concept_label})")
     
     # ==================== RDF序列化 ====================
     

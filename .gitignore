@@ -31,3 +31,17 @@ IDENTITY.md
 TOOLS.md
 USER.md
 VERSION
+
+# Environment variables - 包含敏感信息如 API Key、密码等，严禁提交到版本控制
+.env
+
+# Large database and local data folders
+**/data/*.db
+**/data/*.sqlite3
+**/*.sqlite3
+**/chroma_db/
+**/mem0_qdrant/
+**/audit_lineage.db
+**/*.bin
+**/*.pyc
+**/__pycache__/

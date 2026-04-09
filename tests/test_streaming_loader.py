@@ -9,7 +9,7 @@ from pathlib import Path
 # 添加 src 到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from core.loader import StreamingOntologyLoader
+from src.core.loader import StreamingOntologyLoader
 
 def test_streaming_json(tmp_path):
     """测试标准 JSON 的流式读取"""

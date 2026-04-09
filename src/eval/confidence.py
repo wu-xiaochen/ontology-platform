@@ -323,14 +323,119 @@ class ConfidenceCalculator:
             self._isotonic_calibrate(predictions)
     
     def _platt_calibrate(self, predictions: list[tuple[float, float]]):
-        """Platt 校准"""
-        # 简化实现
-        pass
-    
+        """
+        Platt Scaling 校准
+
+        使用 sigmoid 函数 P(y=1|f) = 1 / (1 + exp(A*f + B)) 拟合校准曲线。
+        通过梯度下降优化参数 A 和 B，最小化负对数似然损失。
+
+        校准结果存入 self._calibration_params['platt'] = {'A': float, 'B': float}
+
+        Args:
+            predictions: (预测置信度, 真实标签 0/1) 列表
+        """
+        import math
+
+        if len(predictions) < 2:
+            # 样本不足时跳过校准，保持原始分数
+            return
+
+        # 初始化参数 —— A 控制斜率，B 控制偏移
+        A = 0.0
+        B = 0.0
+        # 学习率和迭代次数 —— 保守设置以确保收敛
+        learning_rate = 0.01
+        max_iterations = 100
+
+        for _ in range(max_iterations):
+            # 梯度累积器
+            grad_A = 0.0
+            grad_B = 0.0
+
+            for f_score, y_true in predictions:
+                # sigmoid 输出: P = 1 / (1 + exp(A*f + B))
+                exponent = A * f_score + B
+                # 数值稳定性: 限制指数范围防止溢出
+                exponent = max(-500.0, min(500.0, exponent))
+                p = 1.0 / (1.0 + math.exp(exponent))
+
+                # 负对数似然梯度
+                # dL/dA = (p - y_true) * f_score
+                # dL/dB = (p - y_true)
+                error = p - y_true
+                grad_A += error * f_score
+                grad_B += error
+
+            # 归一化梯度
+            n = len(predictions)
+            grad_A /= n
+            grad_B /= n
+
+            # 参数更新
+            A -= learning_rate * grad_A
+            B -= learning_rate * grad_B
+
+        # 存储校准参数供后续预测使用
+        if not hasattr(self, '_calibration_params'):
+            self._calibration_params = {}
+        self._calibration_params['platt'] = {'A': A, 'B': B}
+
     def _isotonic_calibrate(self, predictions: list[tuple[float, float]]):
-        """保序回归校准"""
-        # 简化实现
-        pass
+        """
+        保序回归校准 (Isotonic Regression)
+
+        使用 PAVA (Pool Adjacent Violators Algorithm) 对预测值进行单调递增拟合，
+        生成阶梯映射表。
+
+        校准结果存入 self._calibration_params['isotonic'] = {'mapping': [(score, calibrated), ...]}
+
+        Args:
+            predictions: (预测置信度, 真实标签 0/1) 列表
+        """
+        if len(predictions) < 2:
+            # 样本不足时跳过校准
+            return
+
+        # 按预测分数排序
+        sorted_preds = sorted(predictions, key=lambda x: x[0])
+
+        # 初始化: 每个点作为独立的 block
+        # block 结构: [分数起点, 分数终点, 均值标签, 样本数]
+        blocks = []
+        for score, label in sorted_preds:
+            blocks.append([score, score, label, 1])
+
+        # PAVA 主循环: 合并违反单调性的相邻 block
+        merged = True
+        while merged:
+            merged = False
+            new_blocks = [blocks[0]]
+            for i in range(1, len(blocks)):
+                # 如果当前 block 的均值 < 前一个 block 的均值 → 违反单调性
+                if blocks[i][2] < new_blocks[-1][2]:
+                    # 合并: 加权平均
+                    prev = new_blocks[-1]
+                    total_n = prev[3] + blocks[i][3]
+                    merged_mean = (prev[2] * prev[3] + blocks[i][2] * blocks[i][3]) / total_n
+                    # 更新 block: 扩展范围，更新均值和样本数
+                    new_blocks[-1] = [prev[0], blocks[i][1], merged_mean, total_n]
+                    merged = True
+                else:
+                    new_blocks.append(blocks[i])
+            blocks = new_blocks
+
+        # 生成映射表: [(分数中点, 校准值), ...]
+        mapping = []
+        for block in blocks:
+            # 使用 block 的分数中点作为参考分数
+            midpoint = (block[0] + block[1]) / 2.0
+            calibrated = max(0.0, min(1.0, block[2]))
+            mapping.append((midpoint, calibrated))
+
+        # 存储校准参数
+        if not hasattr(self, '_calibration_params'):
+            self._calibration_params = {}
+        self._calibration_params['isotonic'] = {'mapping': mapping}
 
 
 # 便捷函数
