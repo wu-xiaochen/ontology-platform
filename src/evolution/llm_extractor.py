@@ -241,7 +241,9 @@ class LLMKnowledgeExtractor:
                 temperature=0.3,
                 max_tokens=2000,
             )
-            content = resp.choices[0].message.content
+            content = resp.choices[0].message.content or ""
+            # 去除思维链标签（推理模型如 MiniMax-M2.7 会输出 <think>...</think>）
+            content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
             data = json.loads(content)
             result = self._parse_llm_output(data, domain_hint)
             result.source = "llm"
@@ -267,7 +269,9 @@ class LLMKnowledgeExtractor:
                 temperature=0.3,
                 max_tokens=2000,
             )
-            content = resp.choices[0].message.content
+            content = resp.choices[0].message.content or ""
+            # 去除思维链标签
+            content = re.sub(r'<think>.*?</think>', '', content, flags=re.DOTALL).strip()
             # 查找 JSON 块
             json_match = re.search(r'\{[\s\S]*\}', content)
             if json_match:

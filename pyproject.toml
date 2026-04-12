@@ -28,13 +28,21 @@ requires-python = ">=3.10"
 dependencies = [
     "rdflib>=7.0.0",
     "owlrl>=6.0.0",
-    "owlready2>=0.45",
+    "owlready2>=0.50",
     "networkx>=3.1",
     "fastapi>=0.109.0",
     "uvicorn>=0.27.0",
     "pydantic>=2.0.0",
     "pyyaml>=6.0.0",
     "requests>=2.31.0",
+    "chromadb>=0.4.0",
+    "openai>=1.10.0",
+    "streamlit>=1.30.0",
+    "mem0ai>=0.1.0",
+    "pandas>=2.0.0",
+    "pyvis>=0.3.1",
+    "strawberry-graphql[fastapi]",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]

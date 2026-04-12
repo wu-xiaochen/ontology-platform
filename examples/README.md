@@ -6,7 +6,7 @@
 
 ### Clawra 自主进化 Agent Demo
 ```bash
-streamlit run examples/clawra_demo.py
+python examples/full_demo.py
 ```
 完整展示 Clawra 四大核心能力：
 - **自主学习** — 从文本自动提取对象、关系、逻辑和行为

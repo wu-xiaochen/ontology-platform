@@ -210,7 +210,7 @@ class UnifiedSkillRegistry:
                         name = name_match.group(1) if name_match else skill_id
                         stype = SkillType(type_match.group(1)) if type_match else SkillType.CODE
                         desc = desc_match.group(1) if desc_match else ""
-                        body = re.sub(r'^""".*??"""\n+', '', content, flags=re.DOTALL).strip()
+                        body = re.sub(r'^""".*?"""\s*', '', content, flags=re.DOTALL).strip()
                         
                         skill = Skill(id=skill_id, name=name, description=desc, skill_type=stype, content=body)
                         self.skills[skill_id] = skill

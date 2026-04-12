@@ -102,14 +102,14 @@ class Clawra:
         
         self.conflict_checker = ContradictionChecker(
             self.reasoner, 
-            semantic_mem=self.memory,
+            semantic_mem=self.memory.graph_memory if self.memory else None,
             onto_engine=self.onto_engine
         )
         # v5.0: 初始化情节记忆增强层 (Mem0)
         from .memory.episodic_enhanced import EpisodicMemoryManager
         self.episodic_mgr = EpisodicMemoryManager()
         
-        self.skill_registry = UnifiedSkillRegistry(semantic_memory=self.memory.semantic if self.memory else None)
+        self.skill_registry = UnifiedSkillRegistry(semantic_memory=self.memory.graph_memory if self.memory else None)
         self.distiller = SkillDistiller(self.skill_registry, self.episodic_mgr)
         
         # 从全局 ConfigManager 获取配置实例

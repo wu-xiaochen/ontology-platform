@@ -100,7 +100,7 @@ class ContradictionChecker:
         """
         # 策略1: 查询 Neo4j 图数据库中的 owl:disjointWith 关系
         if self.semantic_mem and getattr(self.semantic_mem, 'is_connected', False):
-            driver = getattr(getattr(self.semantic_mem, 'client', None), 'driver', None)
+            driver = getattr(self.semantic_mem, 'driver', None)
             if driver:
                 # Cypher 查询：查找与目标概念存在 disjointWith 关系的实体
                 query = """

@@ -16,4 +16,8 @@ chromadb>=0.4.0
 openai>=1.10.0
 streamlit>=1.30.0
 python-dotenv>=1.0.0
-mem0-ai>=0.1.0
+mem0ai>=0.1.0
+owlready2>=0.50
+pyvis>=0.3.1
+strawberry-graphql[fastapi]
+pandas>=2.0.0
