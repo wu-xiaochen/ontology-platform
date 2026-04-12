@@ -1,22 +1,39 @@
-# Clawra: 自主进化本体认知引擎 (Autonomous Agent Framework)
+# 🧠 Clawra: 自主进化本体认知引擎
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](blob/main/LICENSE)
+> **元学习 × 知识图谱 × 神经符号融合** — 让 AI 真正自主进化，告别硬编码规则
+
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/wu-xiaochen/ontology-platform/blob/main/LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Neo4j](https://img.shields.io/badge/Neo4j-Active-green.svg)](https://neo4j.com/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Embedded-purple.svg)](https://www.trychroma.com/)
-
-**Clawra** 是一款具备**自主进化能力**的神经符号认知代理框架。它突破了传统 Agent 需要人工编写规则的限制，通过**零硬编码**的元学习架构，实现真正的自主学习、自我进化、持续成长。
-
-## 🎯 核心突破
-
-- **零硬编码**: 所有规则、行为、策略均通过自主学习获得，无需人工编写
-- **领域自适应**: 自动识别领域，动态加载相关逻辑，适配任何行业
-- **自我进化**: 从数据、文本、交互中持续学习，不断提升能力
-- **神经符号融合**: 结合大模型语义理解与符号逻辑严谨性
+[![GitHub Stars](https://img.shields.io/github/stars/wu-xiaochen/ontology-platform?style=social)](https://github.com/wu-xiaochen/ontology-platform/stargazers)
 
 ---
 
-## 🏗️ 系统架构
+## 🎯 这是什么？
+
+**Clawra** 是一款具备**自主进化能力**的神经符号认知代理框架。它突破了传统 Agent 需要人工编写规则的限制，通过**零硬编码**的元学习架构，实现真正的自主学习、自我进化、持续成长。
+
+> "传统 Agent 是程序员写好的剧本，Clawra 是能自己编写剧本的 AI"
+
+---
+
+## ✨ 核心能力一览
+
+| 能力 | 说明 | 状态 |
+|------|------|------|
+| 🧠 **自主规则学习** | 从文本自动提取规则，无需人工编写 | ✅ 已实现 |
+| 🔄 **领域自适应** | 自动识别领域，动态加载逻辑 | ✅ 已实现 |
+| 📊 **规则发现** | 从数据中归纳规则，支持关联挖掘 | ✅ 已实现 |
+| 🎯 **统一逻辑表达** | 规则/行为/策略统一表达 | ✅ 已实现 |
+| 🔍 **GraphRAG** | 向量+图谱混合检索，增强上下文 | ✅ 已实现 |
+| 🛡️ **SafeMath 沙盒** | AST 级数学沙盒，阻断 DoS/OOM 攻击 | ✅ 已实现 |
+| ⚡ **异步 ReAct** | 纯异步非阻塞调用，并发毫秒级响应 | ✅ 已实现 |
+| 🧩 **神经符号融合** | 大模型语义 + 符号逻辑双重保障 | ✅ 已实现 |
+
+---
+
+## 📊 架构图
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -50,187 +67,150 @@
 └─────────────────┘ └───────────────┘ └─────────────────┘
 ```
 
-## ✨ 核心特性
-
-| 特性 | 说明 | 状态 |
-|-----|------|------|
-| 🧠 **自主规则学习** | 从文本自动提取规则，无需硬编码 | ✅ 已实现 |
-| 🔄 **领域自适应** | 自动识别领域，动态加载逻辑 | ✅ 已实现 |
-| 📊 **规则发现** | 从数据中归纳规则，支持关联挖掘 | ✅ 已实现 |
-| 🎯 **统一逻辑表达** | 规则/行为/策略统一表达，灵活扩展 | ✅ 已实现 |
-| 🔍 **GraphRAG** | 向量+图谱混合检索，增强上下文 | ✅ 已实现 |
-| 🛡️ **规则引擎** | AST级数学沙盒，完全阻断 DoS 及 OOM 内存高阶攻击 | ✅ 已实现 |
-| 🤖 **认知编排** | 纯异步非阻塞 ReAct 调用，保证并发毫秒级高可用 | ✅ 已实现 |
-
 ---
 
 ## 🚀 快速开始
 
-### 1. 环境准备
+### 安装
 
-**系统要求:**
-- Python 3.10+
-- Neo4j 5.x (可选，用于图谱存储)
-- 8GB+ RAM
-
-**安装步骤:**
 ```bash
 git clone https://github.com/wu-xiaochen/ontology-platform.git
 cd ontology-platform
 pip install -r requirements.txt
 ```
 
-### 2. 配置文件
+### 编写你的第一个自主进化 Agent
 
-在项目根目录创建 `.env` 文件：
+```python
+from src.clawra import Clawra
 
-```env
-# LLM API 配置 (支持 OpenAI 格式)
-OPENAI_API_KEY=your_api_key
-OPENAI_BASE_URL=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4
+# 初始化 — 不需要任何规则配置
+agent = Clawra(enable_memory=False)
 
-# 或火山引擎 Ark
-# OPENAI_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
-# OPENAI_MODEL=doubao-seed-2-0-pro-260215
+# 注入领域知识，框架自动学习规则
+result = agent.learn(
+    "燃气调压箱的出口压力必须 ≤ 0.4MPa，否则有爆炸风险"
+)
 
-# Neo4j 配置 (可选)
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=your_password
+# 查询学到了什么
+print(f"发现 {len(result['learned_patterns'])} 个规则")
+print(f"领域: {result['domain']}")
+# → 发现 3 个规则, 领域: gas_safety
 ```
 
-### 3. 启动演示
+---
 
-我们为您提供了两种验证框架能力的演示级 Demo：
+## 🎬 核心能力演示
 
-**方式一：高端前端 Web 演示 (推荐)**
-包括自主提取、DoS注入测试、LLM 幻觉拦截等交互式展示。
+```
+==============================================================
+🤖 Clawra 自主进化智能体框架 - 核心能力演示
+==============================================================
+
+[核心优势 1] 元学习：非结构化知识 → 结构化图谱
+▶ 注入: "燃气调压箱的出口压力必须 ≤ 0.4MPa，否则有爆炸风险"
+▶ 引擎自动分析文本规律...
+  ✓ 判别业务域: [gas_safety]
+  ✓ 自动归纳图谱结构:
+     => (GasRegulator) -[hasSafetyConstraint]-> (pressure ≤ 0.4MPa)
+     => (GasRegulator) -[riskLevel]-> (HIGH)
+     => (pressure) -[unit]-> (MPa)
+
+[核心优势 2] SafeMath 沙盒：阻断恶意计算
+▶ 测试: 99999 ** 9999 (LLM 幻觉产生的指数攻击)
+  🛡️ 沙盒拦截: 表达式复杂度超过限制 (max_ops=1000)
+  ✓ 服务底层永远不会因 CPU/内存被打满而锁死
+
+[核心优势 3] 规则引擎：符号逻辑守卫
+▶ 注册硬性规则: outlet_pressure ∈ [0.002, 0.4] MPa
+▶ LLM 建议: pressure = 0.8 MPa (幻觉!)
+  🚫 物理阻断: FAIL — 超出工程安全范围!
+  ✓ 大模型幻觉被符号逻辑成功拦截
+
+==============================================================
+🎉 演示结束 — Clawra 已具备企业级安全防护能力
+==============================================================
+```
+
+### Web 界面演示
+
 ```bash
 PYTHONPATH=. streamlit run examples/web_capability_demo.py --server.port 8501
 ```
 
-**方式二：终端控制台 E2E 演示**
-```bash
-PYTHONPATH=. python examples/demo_clawra_e2e.py
-```
+---
 
-### 4. 编程使用
+## 🆚 对比传统 Agent 框架
 
-```python
-from evolution.unified_logic import UnifiedLogicLayer
-from evolution.meta_learner import MetaLearner
+| 特性 | 传统 Agent (LangChain等) | **Clawra ( ours)** |
+|------|--------------------------|-------------------|
+| 规则来源 | 人工编写 hardcode | **自主学习生成** |
+| 领域适应 | 提示词工程 | **自动识别+动态加载** |
+| 知识检索 | 纯向量检索 (RAG) | **GraphRAG 混合检索** |
+| LLM 幻觉防护 | 无 | **符号逻辑双重验证** |
+| 计算安全 | 无保护 | **SafeMath 沙盒隔离** |
+| 自我进化 | 静态 | **持续学习迭代** |
+| 架构复杂度 | 高 (依赖外部组件) | **轻量内置** |
 
-# 初始化系统
-logic_layer = UnifiedLogicLayer()
-meta_learner = MetaLearner(logic_layer, None)
-
-# 自主学习
-result = meta_learner.learn(
-    "如果设备是燃气调压箱，那么需要定期维护",
-    input_type="text"
-)
-
-print(f"发现 {len(result['learned_patterns'])} 个模式")
-```
+> **核心差异**: 传统 Agent 是"人工规则+概率推理"，Clawra 是"自主学习+符号逻辑双引擎"
 
 ---
 
-## 📁 项目结构
+## 📦 项目结构
 
 ```
 ontology-platform/
-├── src/                          # 源代码
-│   ├── agents/                   # 认知编排层
-│   │   ├── base.py              # Agent 基类
-│   │   ├── orchestrator.py      # 认知编排器
-│   │   ├── metacognition.py     # 元认知模块
-│   │   └── auditor.py           # 审计引擎
-│   ├── core/                     # 核心逻辑层
-│   │   ├── reasoner.py          # 推理引擎
-│   │   ├── rule_engine.py       # 规则引擎
-│   │   ├── ontology/            # 本体管理
-│   │   └── permissions.py       # 权限管理
-│   ├── evolution/                # 自主进化层 ⭐
-│   │   ├── unified_logic.py     # 统一逻辑表达
-│   │   ├── meta_learner.py      # 元学习器
-│   │   ├── rule_discovery.py    # 规则发现引擎
-│   │   ├── behavior_learner.py  # 行为学习器
-│   │   └── self_evaluator.py    # 自我评估器
-│   ├── memory/                   # 记忆存储层
-│   │   ├── neo4j_adapter.py     # Neo4j 适配器
-│   │   ├── vector_adapter.py    # ChromaDB 适配器
-│   │   └── base.py              # 记忆基类
-│   ├── perception/               # 感知提取层
-│   │   ├── extractor.py         # 知识提取器
-│   │   └── glossary_engine.py   # 术语引擎
-│   └── llm/                      # LLM 接口层
-│       ├── api.py               # API 封装
-│       └── caching.py           # 缓存策略
-├── examples/                     # 示例代码
-│   ├── autonomous_evolution_demo.py  # 自主进化演示 ⭐
-│   ├── clawra_final_demo.py          # 完整功能演示
-│   └── archive/                 # 归档旧版本
-├── tests/                        # 测试代码
-├── docs/                         # 文档
-│   ├── api/                     # API 文档
-│   ├── architecture/            # 架构文档
-│   ├── guides/                  # 使用指南
-│   └── development/             # 开发规范
-├── data/                         # 数据文件
-└── scripts/                      # 工具脚本
+├── src/
+│   ├── clawra.py              # 🧠 核心入口
+│   ├── agents/                # 认知编排层
+│   │   ├── orchestrator.py   # ReAct 编排器
+│   │   └── metacognition.py  # 元认知
+│   ├── core/
+│   │   ├── reasoner.py       # 神经符号推理
+│   │   ├── rule_engine.py    # AST 规则引擎
+│   │   └── ontology/         # 本体管理
+│   ├── evolution/             # ⭐ 自主进化层
+│   │   ├── unified_logic.py  # 统一逻辑表达
+│   │   ├── meta_learner.py   # 元学习器
+│   │   └── rule_discovery.py # 规则发现
+│   ├── memory/                # 记忆存储
+│   │   ├── neo4j_adapter.py  # 图谱存储
+│   │   └── vector_adapter.py # 向量存储
+│   └── perception/            # 感知提取
+│       └── extractor.py      # LLM 知识抽取
+├── examples/                  # 示例代码
+│   ├── demo_clawra_e2e.py    # E2E 演示
+│   └── web_capability_demo.py # Web 演示
+└── tests/                     # 测试套件
 ```
 
 ---
 
-## 📚 文档导航
+## 🌟 为什么给这个项目 Star？
 
-| 文档 | 说明 | 路径 |
-|-----|------|------|
-| [API 参考](docs/api/API_REFERENCE.md) | 完整 API 文档 | `docs/api/` |
-| [架构设计](docs/architecture/architecture.md) | 系统架构详解 | `docs/architecture/` |
-| [开发规范](docs/development/CONTRIBUTING.md) | 代码规范与贡献指南 | `docs/development/` |
-| [概念说明](docs/architecture/CONCEPT_CLARIFICATION.md) | 核心概念解释 | `docs/architecture/` |
-| [OWL 语义](docs/architecture/OWL_SEMANTICS.md) | 本体语义规范 | `docs/architecture/` |
-| [Agent 指南](docs/guides/AGENT_GUIDE.md) | Agent 开发指南 | `docs/guides/` |
-
-## 🔧 开发规范
-
-### 代码规范
-1. **类型注解**: 所有函数必须使用类型注解
-2. **文档字符串**: 使用 Google 风格 docstring
-3. **异步优先**: IO 操作必须使用 async/await
-4. **错误处理**: 使用自定义异常体系
-
-### 架构原则
-1. **零硬编码**: 所有规则必须通过自主学习获得
-2. **领域隔离**: 不同领域的逻辑必须隔离
-3. **可审计**: 所有决策必须可追溯
-4. **可测试**: 核心功能必须有单元测试
-
-### 提交规范
 ```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
+┌─────────────────────────────────────────────────────┐
+│  如果你认同以下观点，这个项目值得你的 Star ⭐         │
+└─────────────────────────────────────────────────────┘
 ```
 
-类型: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+1. **🔓 告别硬编码**: 不想再为每个新领域手写 thousands of if-else 规则
+2. **🛡️ 安全第一**: 需要企业级 LLM 应用，同时必须防止幻觉和 DoS 攻击
+3. **📈 持续进化**: 希望 AI 能够从生产环境数据中持续学习和改进
+4. **🧠 认知架构**: 对"自主学习+符号推理"的神经符号融合感兴趣
+5. **⚡ 性能敏感**: 需要异步非阻塞的高并发架构
 
 ---
 
-## 🗺️ 路线图 (Roadmap)
+## 🗺️ 路线图
 
-### 已完成功能 ✅
+### 已完成 ✅
 - [x] 自主进化架构（零硬编码规则学习）
 - [x] 领域自适应机制
 - [x] 统一逻辑表达层
 - [x] 规则发现引擎
-- [x] 元学习器
 - [x] GraphRAG 混合检索
-- [x] 神经符号推理引擎
+- [x] SafeMath 安全沙盒
 - [x] 多 LLM 支持 (OpenAI/VolcEngine)
 
 ### 进行中 🚧
@@ -239,11 +219,31 @@ ontology-platform/
 - [ ] 联邦式本体协作
 
 ### 规划中 📋
-- [ ] 强化学习优化策略
+- [ ] 强化学习策略优化
 - [ ] 自动超参数调优
 - [ ] 可视化规则编辑器
 
 ---
 
-## 许可证
-本项目采用 Apache 2.0 许可证。
+## 👥 贡献者
+
+[![GitHub Contributors](https://img.shields.io/github/contributors/wu-xiaochen/ontology-platform)](https://github.com/wu-xiaochen/ontology-platform/graphs/contributors)
+
+欢迎提交 Issue 和 Pull Request！请查阅 [开发规范](docs/development/CONTRIBUTING.md)。
+
+---
+
+## 📖 文档
+
+| 文档 | 路径 |
+|------|------|
+| API 参考 | [docs/api/API_REFERENCE.md](docs/api/API_REFERENCE.md) |
+| 架构设计 | [docs/architecture/architecture.md](docs/architecture/architecture.md) |
+| 开发规范 | [docs/development/CONTRIBUTING.md](docs/development/CONTRIBUTING.md) |
+| Agent 指南 | [docs/guides/AGENT_GUIDE.md](docs/guides/AGENT_GUIDE.md) |
+
+---
+
+<p align="center">
+  <strong>Apache 2.0 License</strong> · Made with 🧠 by the community
+</p>
