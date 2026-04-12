@@ -45,3 +45,6 @@ VERSION
 **/*.bin
 **/*.pyc
 **/__pycache__/
+
+# Ignore data/ directory
+data/
