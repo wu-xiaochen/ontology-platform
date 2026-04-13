@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clawra Engine - 自主进化本体认知引擎</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 800px;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: #888;
+      margin-bottom: 2rem;
+    }
+    .badges {
+      margin-bottom: 2rem;
+    }
+    .badges img {
+      margin: 0 4px;
+    }
+    .tagline {
+      font-size: 1.3rem;
+      color: #aaa;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    .links {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+    .links a {
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4); }
+    .btn-secondary {
+      background: #1e1e2e;
+      color: #aaa;
+      border: 1px solid #333;
+    }
+    .btn-secondary:hover { border-color: #667eea; color: #667eea; }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+    .feature {
+      background: #1a1a2e;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #2a2a3e;
+    }
+    .feature strong { color: #667eea; }
+    .feature p { font-size: 0.85rem; color: #888; margin-top: 0.3rem; }
+    .github-link {
+      color: #667eea;
+      font-size: 0.9rem;
+    }
+    .github-link:hover { text-decoration: underline; }
+    footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧠 Clawra Engine</h1>
+    <p class="subtitle">Agent Growth Framework for memory, reasoning & metacognition</p>
+
+    <div class="badges">
+      <img src="https://img.shields.io/badge/version-4.1.0--alpha-red?style=flat-square" alt="version">
+      <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="python">
+      <img src="https://img.shields.io/github/stars/wu-xiaochen/clawra-engine?style=social" alt="stars">
+      <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="license">
+      <img src="https://img.shields.io/badge/tests-401%2B-brightgreen" alt="tests">
+    </div>
+
+    <p class="tagline">
+      自主进化本体认知引擎 · 元学习 × 知识图谱 × 神经符号融合<br>
+      <small>让 AI Agent 拥有真正的自主成长能力，告别硬编码规则</small>
+    </p>
+
+    <div class="links">
+      <a href="https://github.com/wu-xiaochen/clawra-engine" class="btn-primary">GitHub Repo</a>
+      <a href="QUICKSTART.html" class="btn-secondary">快速开始</a>
+      <a href="ARCHITECTURE.html" class="btn-secondary">架构文档</a>
+      <a href="SDK_GUIDE.html" class="btn-secondary">SDK指南</a>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <strong>🧠 自主规则学习</strong>
+        <p>从文本自动提取规则，无需人工编写</p>
+      </div>
+      <div class="feature">
+        <strong>🔄 8阶段进化闭环</strong>
+        <p>Perceive→Learn→Reason→Execute→Evaluate→DetectDrift→ReviseRules→UpdateKG</p>
+      </div>
+      <div class="feature">
+        <strong>📊 Pattern 版本控制</strong>
+        <p>版本历史 + diff对比 + Rollback</p>
+      </div>
+      <div class="feature">
+        <strong>🔍 GraphRAG</strong>
+        <p>向量+图谱混合检索，增强上下文</p>
+      </div>
+      <div class="feature">
+        <strong>🚀 Skill 可执行性</strong>
+        <p>SafeExecutor 沙盒 + execute(params)</p>
+      </div>
+      <div class="feature">
+        <strong>🛡️ SafeMath 沙盒</strong>
+        <p>AST 级数学沙盒，阻断 DoS/OOM</p>
+      </div>
+    </div>
+
+    <p><a href="https://github.com/wu-xiaochen/clawra-engine" class="github-link">⭐ Star on GitHub</a></p>
+    <footer>
+      MIT License · Copyright (c) 2026 wu-xiaochen
+    </footer>
+  </div>
+</body>
+</html>

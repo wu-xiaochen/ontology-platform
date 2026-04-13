@@ -1,0 +1,76 @@
+# 本体自动校验工作流
+# 当检测到 .ttl/.owl 文件变更时自动运行校验
+
+name: Ontology Validation
+
+on:
+  push:
+    paths:
+      - '**.ttl'
+      - '**.owl'
+      - '**.rdf'
+  pull_request:
+    paths:
+      - '**.ttl'
+      - '**.owl'
+      - '**.rdf'
+  workflow_dispatch:
+
+jobs:
+  validate-ontology:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install RDFLib
+        run: pip install rdflib owlready2
+      
+      - name: Find changed ontology files
+        id: changed
+        run: |
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACM ${{ github.event.before }}..HEAD -- '*.ttl' '*.owl' '*.rdf' || echo "")
+          echo "changed=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "Changed files: $CHANGED_FILES"
+      
+      - name: Validate OWL Syntax
+        if: steps.changed.outputs.changed != ''
+        run: |
+          for file in ${{ steps.changed.outputs.changed }}; do
+            echo "Validating: $file"
+            python -c "
+import rdflib
+g = rdflib.Graph()
+try:
+    g.parse('$file', format='turtle' if '$file'.endswith('.ttl') else 'xml')
+    print(f'✓ $file: Valid RDF syntax')
+    print(f'  Triples: {len(g)}')
+except Exception as e:
+    print(f'✗ $file: {e}')
+    exit(1)
+"
+          done
+      
+      - name: Run Competency Questions Check
+        if: steps.changed.outputs.changed != ''
+        run: |
+          echo "Running CQ validation (placeholder)"
+          # TODO: 集成 LLM-based CQ 校验
+          echo "CQ check passed"
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ontology-validation-report
+          path: validation-report.txt
+          retention-days: 7

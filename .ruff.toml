@@ -1,0 +1,16 @@
+# Ruff configuration for clawra
+
+line-length = 120
+
+[lint]
+# E402: Module level import not at top of file
+# Intentional for FastAPI optional dependency imports and post-app setup
+ignore = ["E402", "F811"]
+
+[lint.per-file-ignores]
+# Conditional imports in try/except for optional dependencies
+"src/api/main.py" = ["E402", "F811"]
+"src/monitoring.py" = ["E402"]
+"src/performance.py" = ["E402"]
+"src/reasoner.py" = ["E402"]
+"skills/ontology-clawra/scripts/*.py" = ["E722", "E402"]

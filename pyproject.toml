@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clawra-engine"
+version = "4.2.0-alpha"
+description = "Clawra: 让AI Agent拥有记忆、推理和元认知能力的开发框架 | Agent Growth SDK for memory, reasoning & metacognition"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Wu Xiaochen", email = "wu@clawra.ai"}
+]
+keywords = ["AI", "agents", "ontology", "reasoning", "metacognition", "knowledge-graph", "LLM"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "rdflib>=7.0.0",
+    "owlrl>=6.0.0",
+    "owlready2>=0.50",
+    "networkx>=3.1",
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0.0",
+    "requests>=2.31.0",
+    "chromadb>=0.4.0",
+    "openai>=1.10.0",
+    "streamlit>=1.30.0",
+    "mem0ai>=0.1.0",
+    "pandas>=2.0.0",
+    "pyvis>=0.3.1",
+    "strawberry-graphql[fastapi]",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.26.0",
+    "ruff>=0.1.0",
+    "mypy>=1.8.0",
+]
+neo4j = [
+    "neo4j>=5.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/wu-xiaochen/clawra"
+Documentation = "https://github.com/wu-xiaochen/clawra#readme"
+Repository = "https://github.com/wu-xiaochen/clawra"
+Issues = "https://github.com/wu-xiaochen/clawra/issues"
+Changelog = "https://github.com/wu-xiaochen/clawra/releases"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: 依赖外部服务（LLM API）的集成测试，默认跳过"
+]
+addopts = "-m 'not integration' --timeout=30 -q"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
