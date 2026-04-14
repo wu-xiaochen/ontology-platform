@@ -490,7 +490,7 @@ class Neo4jClient:
                     rel_filter = f"AND type(r) IN {rel_types}"
                 
                 query = f"""
-                MATCH path = (start)-[r*1:{depth}]->(end)
+                MATCH path = (start)-[r*1..{depth}]->(end)
                 WHERE start.name = $name
                 {rel_filter}
                 RETURN path, nodes(path) as nodes, relationships(path) as rels
