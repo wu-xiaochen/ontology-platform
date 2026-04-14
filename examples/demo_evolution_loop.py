@@ -31,7 +31,7 @@ def main():
     loop = EvolutionLoop(
         meta_learner=clawra.meta_learner,
         rule_discovery=clawra.rule_discovery,
-        evaluator=clawra.evaluator,
+        evaluator=clawra.self_evaluator,
         reasoner=clawra.reasoner,
         logic_layer=clawra.logic_layer,
         contradiction_checker=clawra.conflict_checker,

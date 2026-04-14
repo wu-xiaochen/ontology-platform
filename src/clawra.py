@@ -14,6 +14,7 @@ from .core.reasoner import Reasoner, Fact
 from .core.knowledge_graph import KnowledgeGraph
 from .core.retriever import GraphRetriever, ContextBuilder, RetrievalResponse
 from .evolution.evaluator import KnowledgeEvaluator
+from .evolution.self_evaluator import SelfEvaluator
 from .core.action_runtime import ActionRuntime
 from .memory.ontology_engine import OntologyEngine
 from .memory.manager import UnifiedMemory
@@ -83,6 +84,8 @@ class Clawra:
         
         # v2.0: 知识质量评估 + 生命周期管理
         self.evaluator = KnowledgeEvaluator(self.knowledge_graph)
+        # 自我评估器 - 支持 EvolutionLoop 的多维评估
+        self.self_evaluator = SelfEvaluator()
         
         # v2.0: Kinetic Layer 动作引擎
         self.action_runtime = ActionRuntime(self.knowledge_graph, self.logic_layer)
