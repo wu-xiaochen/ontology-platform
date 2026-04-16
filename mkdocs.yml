@@ -1,0 +1,82 @@
+site_name: Clawra Engine
+site_description: 神经符号融合的自主进化 AI Agent 框架。让 AI 从文本中学习规则，而非硬编码在 Prompt 里。
+site_author: Wu Xiaochen
+site_url: https://wu-xiaochen.github.io/clawra-engine
+
+repo_name: wu-xiaochen/clawra-engine
+repo_url: https://github.com/wu-xiaochen/clawra-engine
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+    - announce
+
+plugins:
+  - search
+  - social
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/wu-xiaochen/clawra-engine
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/your-server  # 待填
+  generator: false
+  version:
+    provider: mike
+
+nav:
+  - Home:
+      - 主页: index.md
+      - 为什么选 Clawra: why-clawra.md
+      - 快速开始: getting-started.md
+  - Core Concepts:
+      - 架构概览: architecture.md
+      - 进化闭环: evolution-loop.md
+      - 神经符号融合: neurosymbolic.md
+      - 知识图谱: knowledge-graph.md
+  - Guides:
+      - SDK 使用: sdk-guide.md
+      - LangChain 适配: langchain-adapter.md
+      - Claude Code 集成: claude-code.md
+  - Examples:
+      - 基础示例: examples/index.md
+      - 对比 LangChain: examples/vs-langchain.md
+  - Community:
+      - 贡献指南: contributing.md
+      - GitHub: https://github.com/wu-xiaochen/clawra-engine
