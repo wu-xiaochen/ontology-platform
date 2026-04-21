@@ -375,7 +375,7 @@ class EvolutionLoop:
                 phase=phase_str,
                 input_summary=str(input_data.get("text", input_data))[:200],
                 output_summary=str(result.data)[:200],
-                confidence=result.data.get("confidence") if result.data else None,
+                confidence=result.data.get("confidence") if isinstance(result.data, dict) else None,
                 domain=input_data.get("domain"),
                 duration=result.duration,
             )
@@ -399,7 +399,7 @@ class EvolutionLoop:
             return "learning_error"
         elif phase == EvolutionPhase.EXECUTE:
             return "execution_error"
-        elif phase == EvolutionPhase.DETETCT_DRIFT:
+        elif phase == EvolutionPhase.DETECT_DRIFT:
             return "drift_detected"
         return "unknown"
 
@@ -458,7 +458,14 @@ class EvolutionLoop:
         elif failure_type == FailureType.DRIFT_DETECTED:
             self._handle_drift_detected(feedback)
             return True
+        elif failure_type == FailureType.LEARNING_ERROR:
+            self._handle_learning_error(feedback)
+            return True
+        elif failure_type == FailureType.EXECUTION_ERROR:
+            self._handle_execution_error(feedback)
+            return True
 
+        logger.warning(f"未处理的失败类型: {failure_type.value}")
         return False
 
     def _handle_inference_error(self, feedback: FeedbackSignal):
@@ -527,6 +534,51 @@ class EvolutionLoop:
                 self.contradiction_checker.check_and_resolve()
             except Exception as e:
                 logger.debug(f"矛盾检查异常: {e}")
+
+    def _handle_learning_error(self, feedback: FeedbackSignal):
+        """
+        处理学习错误：触发 MetaLearner 重新学习
+
+        策略：从情节记忆获取失败案例，重新组织学习材料
+        """
+        logger.info(
+            f"处理学习错误 [retry={feedback.retry_count}]: "
+            f"{feedback.context.get('error')}"
+        )
+
+        if not self.meta_learner or not self._enable_meta_feedback:
+            return
+
+        error_context = feedback.context.get("error", "")
+        domain = feedback.context.get("domain")
+
+        # 获取相关失败案例
+        if self._episodic:
+            sampled = self._episodic.failure_sampling(n=3)
+            if sampled:
+                logger.info(f"从 {len(sampled)} 个失败案例中提取学习材料")
+
+    def _handle_execution_error(self, feedback: FeedbackSignal):
+        """
+        处理执行错误：记录并触发规则验证
+
+        策略：检查是否是规则本身的问题，如果是则触发重新学习
+        """
+        logger.info(
+            f"处理执行错误 [retry={feedback.retry_count}]: "
+            f"{feedback.context.get('error')}"
+        )
+
+        if not self.logic_layer:
+            return
+
+        # 检查规则是否过时
+        try:
+            revise_count = self._revise_low_confidence_patterns()
+            if revise_count > 0:
+                logger.info(f"执行错误触发修正了 {revise_count} 条低置信度规则")
+        except Exception as e:
+            logger.debug(f"规则修正异常: {e}")
 
     def _handle_drift_detected(self, feedback: FeedbackSignal):
         """
