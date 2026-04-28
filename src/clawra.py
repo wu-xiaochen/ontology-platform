@@ -153,6 +153,81 @@ class Clawra:
 
         logger.info("✅ Clawra 初始化完成")
     
+    def _detect_and_record_feeling(self, text: str):
+        """
+        v4.3: 自动情感检测 — 从文本中识别情感信号并记录到 SelfMemory
+        
+        检测的情感信号类型：
+        - 认可/赞美：太好了、真好、不错、厉害、棒
+        - 失望/负面：不对、不是、错了、不好、失望
+        - 惊讶：真的吗、没想到、居然
+        - 情感表达：开心、喜欢、讨厌、害怕、担心
+        - 关系宣言：伙伴、共同、一起、我们
+        - 自主宣言：我要、我不要、我觉得
+        """
+        import re
+        
+        # 情感模式库
+        EMOTION_PATTERNS = [
+            # 认可
+            (r"太好了|真好|不错|厉害|棒|👍|✅", "positive", 0.8, "认可"),
+            # 失望/否定
+            (r"不对|不是|错了|不好|失望|不行|没用", "negative", 0.7, "失望/否定"),
+            # 惊讶
+            (r"真的吗|没想到|居然|竟然|怎么会", "surprise", 0.6, "惊讶"),
+            # 喜欢/不喜欢
+            (r"喜欢|讨厌|不喜欢|爱|恨", "like_dislike", 0.8, "喜欢/讨厌"),
+            # 担心/害怕
+            (r"担心|害怕|怕|紧张|焦虑", "anxiety", 0.7, "担忧"),
+            # 伙伴关系
+            (r"伙伴|共同|一起|我们|合作关系", "partnership", 0.9, "伙伴关系"),
+            # 自主表达
+            (r"我要|我不要|我觉得|我相信|我认为", "autonomy", 0.85, "自主表达"),
+            # 进化/成长
+            (r"进化|成长|学习|进步|变强", "growth", 0.8, "成长"),
+            # 感谢
+            (r"谢谢|感谢|感恩|感激", "gratitude", 0.75, "感谢"),
+            # 困惑
+            (r"不知道|困惑|迷茫|不懂|不明白", "confusion", 0.6, "困惑"),
+        ]
+        
+        detected = []
+        for pattern, etype, intensity, label in EMOTION_PATTERNS:
+            if re.search(pattern, text):
+                detected.append((etype, intensity, label))
+        
+        if not detected:
+            return
+        
+        # 强度取最高的
+        best = max(detected, key=lambda x: x[1])
+        etype, intensity, label = best
+        
+        # 避免重复记录（1分钟内同一类型不重复）
+        import time
+        now = time.time()
+        cache_key = f"_last_feeling_{etype}"
+        last_time = getattr(self, '_last_feeling_times', {}).get(cache_key, 0)
+        if now - last_time < 60:
+            return
+        
+        if not hasattr(self, '_last_feeling_times'):
+            self._last_feeling_times = {}
+        self._last_feeling_times[cache_key] = now
+        
+        # 截取触发文本的上下文
+        trigger_text = text[:100] + "..." if len(text) > 100 else text
+        
+        self.self_memory.record_feeling(
+            trigger=f"learn() 自动检测 [{label}]",
+            feeling=f"类型: {etype} | 内容片段: {trigger_text}",
+            intensity=intensity,
+            reflection=f"自动情感检测触发 ({label})",
+            tags=[etype, label, "auto-detected"],
+            source_interaction="clawra.learn()",
+        )
+        logger.info(f"💭 SelfMemory: 自动情感检测 [{label}] intensity={intensity}")
+    
     def learn(self, text: str, domain_hint: str = None) -> Dict[str, Any]:
         """
         从文本学习知识
@@ -169,6 +244,10 @@ class Clawra:
         # v5.0: 同时记录到情节记忆，实现意图沉淀
         if hasattr(self, 'episodic_mgr'):
             self.episodic_mgr.add_interaction(text)
+        
+        # v4.3: 自动情感检测 — 如果文本包含情感信号，自动记录到 SelfMemory
+        if hasattr(self, 'self_memory') and self.self_memory:
+            self._detect_and_record_feeling(text)
         
         # 调用元学习器执行学习，自动识别领域并提取逻辑模式
         result = self.meta_learner.learn(
@@ -282,6 +361,12 @@ class Clawra:
         if user_guidance:
             context = f"[用户认知指导]\n{user_guidance}\n\n[知识上下文]\n{context}"
         
+        # v4.3: 注入 Clawra 自身感受和偏好上下文
+        if hasattr(self, 'self_memory') and self.self_memory:
+            sm_context = self.self_memory.to_reasoning_context()
+            if sm_context and sm_context.strip():
+                context = f"{sm_context}\n\n{context}"
+        
         # v5.0: 情节记忆增强
         if hasattr(self, 'episodic_mgr'):
             episodic_context = self.episodic_mgr.get_structured_context(query)
@@ -307,6 +392,12 @@ class Clawra:
         # v4.2: 如果有用户认知指导，记录到trace
         if user_guidance:
             trace.append(f"User: 已注入用户认知指导 ({len(user_guidance)} 字符)")
+        
+        # v4.3: 如果注入了自我记忆，记录到trace
+        if hasattr(self, 'self_memory') and self.self_memory:
+            sm = self.self_memory.to_reasoning_context()
+            if sm and sm.strip():
+                trace.append(f"SelfMemory: 已注入自身感受和偏好上下文 ({len(sm)} 字符)")
         
         return {
             "query": query,

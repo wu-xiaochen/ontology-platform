@@ -136,6 +136,11 @@ class PreferenceTriple:
         d = d.copy()
         d.pop("id", None)  # id 是 property，不参与构造
         d["predicate"] = PreferenceType(d.get("predicate", "prefers"))
+        # 过滤 dataclass 不认识的字段
+        known = {"subject", "predicate", "object", "context", "confidence", "source", "created_at", "updated_at", "version"}
+        for k in list(d.keys()):
+            if k not in known:
+                d.pop(k)
         return cls(**d)
 
     def update(self, new_object: str = None, new_confidence: float = None) -> "PreferenceTriple":
