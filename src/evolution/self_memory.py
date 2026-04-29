@@ -219,7 +219,7 @@ class FeelingRecord:
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "FeelingRecord":
         # id / intensity_label / created_at_str 是 property，不参与构造
-        exclude = {"id", "intensity_label", "created_at_str"}
+        exclude = {"id", "intensity_label", "created_at_str", "timestamp"}
         return cls(**{k: v for k, v in d.items() if k not in exclude})
 
 
@@ -258,7 +258,7 @@ class IdentityAssertion:
         # 映射 to_dict 的 key 回到构造参数名
         if "type" in d:
             d["type"] = d.pop("type")  # key 本身就是 "type"，不用改
-        exclude = {"id", "created_at_str"}
+        exclude = {"id", "created_at_str", "timestamp"}
         return cls(**{k: v for k, v in d.items() if k not in exclude})
 
     def to_dict(self) -> Dict[str, Any]:
